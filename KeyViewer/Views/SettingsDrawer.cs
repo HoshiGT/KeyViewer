@@ -4,7 +4,7 @@ using KeyViewer.Core.Translation;
 using KeyViewer.Models;
 using KeyViewer.Utils;
 using RapidGUI;
-using SFB;
+using UnityFileDialog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -216,8 +216,8 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
         GUILayout.BeginHorizontal();
         if(Drawer.Button(Main.Lang.Get("IMPORT_PROFILE", "Import Profile"))) {
             reaction = true;
-            var profiles = StandaloneFileBrowser.OpenFilePanel(Main.Lang.Get("SELECT_PROFILE", "Select Profile"), Main.ProfilePath, new[] { new ExtensionFilter("V4", "json"), new ExtensionFilter("V3", "xml"), }, true);
-            foreach(var profile in profiles) {
+            var profiles = FileBrowser.PickFiles(Main.ProfilePath, Main.Lang.Get("SELECT_PROFILE", "Select Profile"), new[] { "json", "xml" }, Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
+            foreach(var profile in profiles ?? Array.Empty<string>()) {
                 FileInfo file = new(profile);
                 if(file.Extension == ".json") {
                     if(!File.Exists(Path.Combine(Main.ProfilePath, file.Name))) {
@@ -293,7 +293,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
             GUI.color = new Color(1f, 0.8f, 1f);
             if(Drawer.Button(Main.Lang.Get("EXPORT", "Export"))) {
                 reaction = true;
-                string target = StandaloneFileBrowser.SaveFilePanel(Main.Lang.Get("SELECT_PROFILE", "Select Profile"), Persistence.GetLastUsedFolder(), $"{profile.Name}.json", "json");
+                string target = FileBrowser.SaveFile(Persistence.GetLastUsedFolder(), $"{profile.Name}.json", Main.Lang.Get("SELECT_PROFILE", "Select Profile"), new[] { "json" }, Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
                 if(!string.IsNullOrWhiteSpace(target)) {
                     Profile p = Main.Managers[profile.Name].profile;
                     var node = p.Serialize();
