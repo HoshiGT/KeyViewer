@@ -219,8 +219,8 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
             using var dialog = new FileDialog();
             dialog.SetTitle(Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
             dialog.SetDirectory(Main.ProfilePath);
-            dialog.AddFilter("V4", "json");
-            dialog.AddFilter("V3", "xml");
+            dialog.AddFilter("V4", new[] { "json" });
+            dialog.AddFilter("V3", new[] { "xml" });
             var profiles = dialog.PickFiles();
             if(profiles != null) {
                 foreach(var profile in profiles) {
@@ -304,7 +304,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
                 dialog.SetTitle(Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
                 dialog.SetDirectory(Persistence.GetLastUsedFolder());
                 dialog.SetFileName($"{profile.Name}.json");
-                dialog.AddFilter("json", "json");
+                dialog.AddFilter("json", new[] { "json" });
                 string target = dialog.SaveFile();
                 if(!string.IsNullOrWhiteSpace(target)) {
                     Profile p = Main.Managers[profile.Name].profile;
