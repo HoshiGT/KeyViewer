@@ -263,7 +263,7 @@ public static class Main {
     }
     public static IEnumerator InitializeManagersCo() {
         if(!AssetManager.Initialized) {
-            yield return new WaitUntil(() => !AssetManager.Initialized);
+            yield return new WaitUntil(() => AssetManager.Initialized);
         }
 
         foreach(var (name, manager) in Managers) {

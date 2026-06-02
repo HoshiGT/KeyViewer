@@ -672,7 +672,7 @@ public static class Drawer {
         myTextField.padding.right = 40;
         mySlider = new GUIStyle(GUI.skin.horizontalSlider);
         myThumb = new GUIStyle(GUI.skin.horizontalSliderThumb);
-        SetStyle(Main.Settings.UseLegacyTheme);
+        SetStyle(Main.Settings?.UseLegacyTheme ?? false);
 
         nopadButton = new GUIStyle(myButton) {
             padding = new RectOffset(0, 0, 0, 0),

@@ -302,7 +302,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
                 reaction = true;
                 using var dialog = new FileDialog();
                 dialog.SetTitle(Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
-                dialog.SetDirectory(Persistence.GetLastUsedFolder());
+                dialog.SetDirectory(Main.ProfilePath);
                 dialog.SetFileName($"{profile.Name}.json");
                 dialog.AddFilter("json", new[] { "json" });
                 string target = dialog.SaveFile();
