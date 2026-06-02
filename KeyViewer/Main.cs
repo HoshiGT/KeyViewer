@@ -46,7 +46,7 @@ public static class Main {
     public static string Tooltip = "";
     public static void Load(ModEntry modEntry) {
         Mod = modEntry;
-        ProfilePath = Path.Combine(Mod.Path, "profiles");
+        ProfilePath = Mod.Path;
         Logger = modEntry.Logger;
 
         GUI = new GUIController();

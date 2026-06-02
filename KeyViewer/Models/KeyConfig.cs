@@ -92,16 +92,16 @@ public class KeyConfig : IModel, ICopyable<KeyConfig> {
         if(UpdateTextAlways) {
             node[nameof(UpdateTextAlways)] = UpdateTextAlways;
         }
-        if(EnableCountText) {
+        if(!EnableCountText) {
             node[nameof(EnableCountText)] = EnableCountText;
         }
-        if(EnableOutlineImage) {
+        if(!EnableOutlineImage) {
             node[nameof(EnableOutlineImage)] = EnableOutlineImage;
         }
         if(DisableSorting) {
             node[nameof(DisableSorting)] = DisableSorting;
         }
-        if(DoNotScaleText) {
+        if(!DoNotScaleText) {
             node[nameof(DoNotScaleText)] = DoNotScaleText;
         }
         if(BackgroundBlurEnabled) {
