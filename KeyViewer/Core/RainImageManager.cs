@@ -44,16 +44,17 @@ public class RainImageManager {
             }
         }
     }
+    private int _index;
     int Index {
         get {
-            if(field < sprites.Count) {
-                return field++;
+            if(_index < sprites.Count) {
+                return _index++;
             }
 
-            field = 1;
+            _index = 1;
             return 0;
         }
 
-        set;
+        set => _index = value;
     }
 }

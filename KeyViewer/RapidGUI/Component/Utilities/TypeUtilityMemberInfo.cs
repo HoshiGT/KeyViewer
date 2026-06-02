@@ -19,10 +19,11 @@ public static partial class TypeUtility {
         public abstract object GetValue(object value);
         public abstract void SetValue(object obj, object value);
 
+        private string _label;
         public string label {
-            get => field ?? Name;
+            get => _label ?? Name;
 
-            set;
+            set => _label = value;
         }
 
         public MinMaxFloat range { get; set; }

@@ -99,7 +99,7 @@ public static class Main {
 
                     var existingProfile = Settings.ActiveProfiles.FirstOrDefault(p => p.Name == profileName);
                     if(existingProfile.Name != default(ActiveProfile).Name) {
-                        AddManager(existingProfile);
+                        AddManager(existingProfile, true);
                         continue;
                     }
 
@@ -267,14 +267,21 @@ public static class Main {
         }
 
         foreach(var (name, manager) in Managers) {
-            var elapsed = MiscUtils.MeasureTime(() => {
-                manager.Init();
-                manager.UpdateKeys();
-            });
-            Logger.Log($"Initialized Key Manager {name}. ({elapsed.TotalMilliseconds}ms)");
+            if(manager.initialized) {
+                Logger.Log($"Key Manager {name} already initialized, updating keys...");
+                var updateOnly = MiscUtils.MeasureTime(() => manager.UpdateKeys());
+                Logger.Log($"Updated Key Manager {name}. ({updateOnly.TotalMilliseconds}ms)");
+            } else {
+                var elapsed = MiscUtils.MeasureTime(() => {
+                    manager.Init();
+                    manager.UpdateKeys();
+                });
+                Logger.Log($"Initialized Key Manager {name}. ({elapsed.TotalMilliseconds}ms)");
+            }
             yield return null;
         }
         OnManagersInitialized();
+        RefreshVisibility();
         yield break;
     }
     public static void ReleaseManagers() {
@@ -283,6 +290,22 @@ public static class Main {
             Logger.Log($"Released Key Manager {name}.");
         }
         Managers = null;
+    }
+    public static void RefreshVisibility() {
+        if(Managers == null || !IsEnabled) {
+            return;
+        }
+
+        foreach(var manager in Managers.Values) {
+            bool showViewer = true;
+            if(manager.profile.ViewOnlyGamePlay) {
+                showViewer = IsPlaying;
+            }
+
+            if(manager.gameObject.activeSelf != showViewer) {
+                manager.gameObject.SetActive(showViewer);
+            }
+        }
     }
     public static void ResetKeys() {
         foreach(var manager in Managers.Values) {
