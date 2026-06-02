@@ -371,6 +371,7 @@
     <Compile Include="Models\RainImageDisplayMode.cs" />
     <Compile Include="Models\VectorConfig.cs" />
     <Compile Include="Models\ObjectConfig.cs" />
+    <Compile Include="Patches\LimitNotRegisteredKeysPatch.cs" />
     <Compile Include="Patches\OnResetScenePatch.cs" />
     <Compile Include="Patches\RemoveFuckingUMMDummyLogPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

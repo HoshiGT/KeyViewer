@@ -103,10 +103,7 @@ public static class Main {
                         continue;
                     }
 
-                    var profileJsonNew = File.ReadAllText(file);
-                    var profileDataNew = JsonConvert.DeserializeObject<Profile>(profileJsonNew);
-
-                    var newActiveProfile = new ActiveProfile(profileName, existingProfile.Active);
+                    var newActiveProfile = new ActiveProfile(profileName, true);
                     Settings.ActiveProfiles.Add(newActiveProfile);
 
                     if(!AddManager(newActiveProfile)) {
