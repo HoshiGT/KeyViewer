@@ -4,7 +4,7 @@ using KeyViewer.Core.Translation;
 using KeyViewer.Models;
 using KeyViewer.Utils;
 using RapidGUI;
-using SFB;
+using UnityFileDialog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -216,19 +216,26 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
         GUILayout.BeginHorizontal();
         if(Drawer.Button(Main.Lang.Get("IMPORT_PROFILE", "Import Profile"))) {
             reaction = true;
-            var profiles = StandaloneFileBrowser.OpenFilePanel(Main.Lang.Get("SELECT_PROFILE", "Select Profile"), Main.ProfilePath, new[] { new ExtensionFilter("V4", "json"), new ExtensionFilter("V3", "xml"), }, true);
-            foreach(var profile in profiles) {
-                FileInfo file = new(profile);
-                if(file.Extension == ".json") {
-                    if(!File.Exists(Path.Combine(Main.ProfilePath, file.Name))) {
-                        file.CopyTo(Path.Combine(Main.ProfilePath, file.Name));
-                    }
+            using var dialog = new FileDialog();
+            dialog.SetTitle(Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
+            dialog.SetDirectory(Main.ProfilePath);
+            dialog.AddFilter("V4", "json");
+            dialog.AddFilter("V3", "xml");
+            var profiles = dialog.PickFiles();
+            if(profiles != null) {
+                foreach(var profile in profiles) {
+                    FileInfo file = new(profile);
+                    if(file.Extension == ".json") {
+                        if(!File.Exists(Path.Combine(Main.ProfilePath, file.Name))) {
+                            file.CopyTo(Path.Combine(Main.ProfilePath, file.Name));
+                        }
 
-                    var activeProfile = new ActiveProfile(Path.GetFileNameWithoutExtension(file.FullName), true);
-                    model.ActiveProfiles.Add(activeProfile);
-                    Main.AddManager(activeProfile, true);
-                } else if(file.Extension == ".xml") {
-                    Main.MigrateFromV3Xml(file.FullName);
+                        var activeProfile = new ActiveProfile(Path.GetFileNameWithoutExtension(file.FullName), true);
+                        model.ActiveProfiles.Add(activeProfile);
+                        Main.AddManager(activeProfile, true);
+                    } else if(file.Extension == ".xml") {
+                        Main.MigrateFromV3Xml(file.FullName);
+                    }
                 }
             }
         }
@@ -293,7 +300,12 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
             GUI.color = new Color(1f, 0.8f, 1f);
             if(Drawer.Button(Main.Lang.Get("EXPORT", "Export"))) {
                 reaction = true;
-                string target = StandaloneFileBrowser.SaveFilePanel(Main.Lang.Get("SELECT_PROFILE", "Select Profile"), Persistence.GetLastUsedFolder(), $"{profile.Name}.json", "json");
+                using var dialog = new FileDialog();
+                dialog.SetTitle(Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
+                dialog.SetDirectory(Persistence.GetLastUsedFolder());
+                dialog.SetFileName($"{profile.Name}.json");
+                dialog.AddFilter("json", "json");
+                string target = dialog.SaveFile();
                 if(!string.IsNullOrWhiteSpace(target)) {
                     Profile p = Main.Managers[profile.Name].profile;
                     var node = p.Serialize();
