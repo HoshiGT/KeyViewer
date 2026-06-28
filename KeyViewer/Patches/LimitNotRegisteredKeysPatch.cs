@@ -35,7 +35,9 @@ public static class LimitNotRegisteredKeysPatch {
         _wasLimiting = true;
 
         var unityKeys = new HashSet<KeyCode>();
-        var asyncKeys = new HashSet<KeyLabel>();
+        // r145 (2026/06) changed KeysSetting._asyncKeysCache from HashSet<KeyLabel> to
+        // HashSet<ushort> holding native key codes (it's matched against AsyncKeyCode.key).
+        var asyncKeys = new HashSet<ushort>();
 
         foreach(var manager in Main.Managers.Values) {
             if(!manager.profile.LimitNotRegisteredKeys) continue;
@@ -43,8 +45,11 @@ public static class LimitNotRegisteredKeysPatch {
                 if(string.IsNullOrEmpty(config.DummyName)) {
                     unityKeys.Add(config.Code);
                     var label = AsyncInputCompat.Convert(config.Code);
-                    if(label != KeyLabel.Unknown)
-                        asyncKeys.Add(label);
+                    if(label != KeyLabel.Unknown) {
+                        ushort native = SkyHookKeyMapper.KeyLabelToNativeKeyCode(label);
+                        if(native != ushort.MaxValue)
+                            asyncKeys.Add(native);
+                    }
                 }
             }
         }
