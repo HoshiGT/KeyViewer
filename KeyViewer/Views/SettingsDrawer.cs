@@ -270,8 +270,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
                 model.ActiveProfiles[i] = profile;
             }
             GUI.color = profile.Active ? new Color(0.8f, 0.8f, 1f) : Color.gray;
-            if(Drawer.Button(Main.Lang.Get("EDIT", "Edit")) && profile.Active) {
-                var manager = Main.Managers[profile.Name];
+            if(Drawer.Button(Main.Lang.Get("EDIT", "Edit")) && profile.Active && Main.Managers.TryGetValue(profile.Name, out var manager)) {
                 Main.GUI.Push(new ProfileDrawer(manager, manager.profile, profile.Name));
             }
             GUI.color = new Color(1f, 0.8f, 0.8f);
@@ -298,7 +297,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
                 }
             }
             GUI.color = new Color(1f, 0.8f, 1f);
-            if(Drawer.Button(Main.Lang.Get("EXPORT", "Export"))) {
+            if(Drawer.Button(Main.Lang.Get("EXPORT", "Export")) && Main.Managers.TryGetValue(profile.Name, out var exportManager)) {
                 reaction = true;
                 using var dialog = new FileDialog();
                 dialog.SetTitle(Main.Lang.Get("SELECT_PROFILE", "Select Profile"));
@@ -307,7 +306,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
                 dialog.AddFilter("json", new[] { "json" });
                 string target = dialog.SaveFile();
                 if(!string.IsNullOrWhiteSpace(target)) {
-                    Profile p = Main.Managers[profile.Name].profile;
+                    Profile p = exportManager.profile;
                     var node = p.Serialize();
                     node["References"] = ProfileImporter.GetReferencesAsJson(p);
                     File.WriteAllText(target, node.ToString());
