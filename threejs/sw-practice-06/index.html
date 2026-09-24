@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SW 竞赛练习题（6）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1f4;
+    --panel: #f7f8fa;
+    --ink: #18202a;
+    --muted: #5a6573;
+    --faint: #8a94a1;
+    --line: #d3d9e0;
+    --accent: #1f63d6;
+    --accent-ink: #ffffff;
+    --accent-soft: #e1eafa;
+    --chip: #ffffffcc;
+    --chip-line: #c9d1db;
+    --vp-top: #f5f7fa;
+    --vp-bottom: #c5cfda;
+    --label-bg: #ffffffe6;
+    --label-ink: #1b4fae;
+    --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #11151a;
+      --panel: #161b21;
+      --ink: #e4e9ef;
+      --muted: #9ca7b4;
+      --faint: #6d7885;
+      --line: #29313b;
+      --accent: #5b98f5;
+      --accent-ink: #0b1322;
+      --accent-soft: #1a2940;
+      --chip: #1d232bcc;
+      --chip-line: #343e4a;
+      --vp-top: #2c333c;
+      --vp-bottom: #13171c;
+      --label-bg: #121821e6;
+      --label-ink: #8fb8ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #11151a;
+    --panel: #161b21;
+    --ink: #e4e9ef;
+    --muted: #9ca7b4;
+    --faint: #6d7885;
+    --line: #29313b;
+    --accent: #5b98f5;
+    --accent-ink: #0b1322;
+    --accent-soft: #1a2940;
+    --chip: #1d232bcc;
+    --chip-line: #343e4a;
+    --vp-top: #2c333c;
+    --vp-bottom: #13171c;
+    --label-bg: #121821e6;
+    --label-ink: #8fb8ff;
+  }
+
+  html { height: 100%; box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: inherit; }
+  [hidden] { display: none !important; }
+  body {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.6 var(--sans);
+  }
+
+  .app {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+
+  /* ---------- panel ---------- */
+  .panel {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 20px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .eyebrow {
+    margin: 0;
+    font: 500 11px/1.4 var(--mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    margin: 4px 0 6px;
+    font-size: 22px;
+    line-height: 1.3;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .src { margin: 0; color: var(--muted); font-size: 13px; }
+  .src a { color: var(--accent); text-underline-offset: 2px; }
+
+  .tree-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .tree-head .part { font-weight: 500; color: var(--ink); }
+  .tree-head .unit { font-family: var(--mono); }
+
+  .features { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; }
+  .feat {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    column-gap: 8px;
+    align-items: start;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    position: relative;
+  }
+  .feat:hover { background: var(--accent-soft); }
+  .feat:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .feat svg { width: 18px; height: 18px; margin-top: 2px; color: var(--muted); }
+  .feat .name { font-weight: 500; display: block; }
+  .feat .params {
+    display: block;
+    font: 12px/1.45 var(--mono);
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .feat[aria-current="step"] { background: var(--accent-soft); }
+  .feat[aria-current="step"] svg { color: var(--accent); }
+  .feat.rolled { opacity: .42; }
+  /* SolidWorks-style rollback bar under the active feature */
+  .feat[aria-current="step"]::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: -3px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+  .feat[aria-current="step"].last::after { display: none; }
+
+  .note {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .note strong { display: block; font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 2px; }
+
+  .stats {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    font-size: 13px;
+  }
+  .stats dt { color: var(--muted); }
+  .stats dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+  .keys { margin: auto 0 0; font-size: 12px; color: var(--faint); }
+  kbd {
+    font: 11px var(--mono);
+    padding: 0 4px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    color: var(--muted);
+  }
+
+  /* ---------- viewport ---------- */
+  .viewport {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--vp-top), var(--vp-bottom));
+  }
+  .viewport canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .labels { position: absolute; inset: 0; pointer-events: none; }
+  .dim {
+    font: 500 12px/1 var(--mono);
+    color: var(--label-ink);
+    background: var(--label-bg);
+    padding: 3px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .toolbar {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .seg {
+    display: flex;
+    pointer-events: auto;
+    background: var(--chip);
+    border: 1px solid var(--chip-line);
+    border-radius: 8px;
+    padding: 2px;
+    backdrop-filter: blur(6px);
+  }
+  .seg button, .stepper button {
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: 500 13px/1 var(--sans);
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .seg button:hover, .stepper button:hover:not(:disabled) { background: var(--accent-soft); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .seg button:focus-visible, .stepper button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .stepper {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--chip);
+    border: 1px solid var(--chip-line);
+    border-radius: 8px;
+    padding: 2px;
+    backdrop-filter: blur(6px);
+  }
+  .stepper button { font-size: 15px; padding: 6px 12px; }
+  .stepper button:disabled { color: var(--faint); cursor: default; }
+  .stepper .where {
+    min-width: 0;
+    padding: 0 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stepper .where b { font: 500 12px var(--mono); color: var(--muted); margin-right: 6px; }
+
+  .loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    color: var(--muted);
+    background: linear-gradient(180deg, var(--vp-top), var(--vp-bottom));
+  }
+  .loading span { padding: 8px 14px; border-radius: 8px; background: var(--chip); border: 1px solid var(--chip-line); }
+
+  @media (max-width: 820px) {
+    .app {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(320px, 58%) minmax(0, 1fr);
+    }
+    .viewport { order: -1; }
+    .panel { border-right: 0; border-top: 1px solid var(--line); padding: 16px; }
+    .toolbar { top: 10px; left: 12px; right: 12px; justify-content: center; }
+    .seg button { padding: 7px 8px; }
+    .keys { display: none; }
+  }
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+    "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.7/build/index.module.js",
+    "three-bvh-csg": "https://cdn.jsdelivr.net/npm/three-bvh-csg@0.0.18/build/index.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <header>
+      <p class="eyebrow">SolidWorks 竞赛练习题</p>
+      <h1>练习题（6）</h1>
+      <p class="src">按<a href="http://www.jxage.com/11706.html" target="_blank" rel="noopener">机械时代网教程</a>的 9 个特征步骤，用 three.js 和 CSG 布尔运算重建。点击特征可以回退到那一步。</p>
+    </header>
+
+    <section aria-label="特征树">
+      <div class="tree-head"><span class="part">零件6</span><span class="unit">单位 mm</span></div>
+      <ol class="features" id="features"></ol>
+    </section>
+
+    <p class="note" id="note" aria-live="polite"></p>
+
+    <dl class="stats">
+      <dt>体积</dt><dd id="stat-vol">—</dd>
+      <dt>实体</dt><dd id="stat-bodies">—</dd>
+      <dt>包围盒</dt><dd id="stat-box">—</dd>
+    </dl>
+
+    <p class="keys"><kbd>←</kbd> <kbd>→</kbd> 切换特征 · 左键旋转 · 滚轮缩放 · 右键平移</p>
+  </aside>
+
+  <main class="viewport" id="viewport">
+    <div class="toolbar" role="toolbar" aria-label="视图">
+      <div class="seg" aria-label="标准视图">
+        <button type="button" id="view-iso" data-view="iso" aria-pressed="true">等轴测</button>
+        <button type="button" id="view-front" data-view="front" aria-pressed="false" title="正对前视基准面（草图 1 所在平面）">前视</button>
+        <button type="button" id="view-top" data-view="top" aria-pressed="false" title="正对上视基准面（草图 2 所在平面）">上视</button>
+        <button type="button" id="view-back" data-view="back" aria-pressed="false" title="从底面看空腔、螺钉柱和筋">后视</button>
+      </div>
+      <div class="seg" aria-label="显示">
+        <button type="button" id="toggle-section" data-toggle="section" aria-pressed="false" title="沿上视基准面剖开">剖切</button>
+        <button type="button" id="toggle-sketch" data-toggle="sketch" aria-pressed="true">草图</button>
+        <button type="button" id="toggle-edges" data-toggle="edges" aria-pressed="true">边线</button>
+      </div>
+    </div>
+
+    <div class="stepper">
+      <button type="button" id="prev" aria-label="上一个特征">‹</button>
+      <span class="where" id="where"></span>
+      <button type="button" id="next" aria-label="下一个特征">›</button>
+    </div>
+
+    <div class="loading" id="loading"><span id="loading-text">正在计算布尔运算…</span></div>
+  </main>
+</div>
+
+<script>
+  // If the module CDN is unreachable the module never runs; say so instead of spinning forever.
+  setTimeout(function () {
+    if (!window.__modelReady) {
+      var t = document.getElementById('loading-text');
+      if (t) t.textContent = '三维库没有加载成功，请检查网络后刷新页面。';
+    }
+  }, 20000);
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { mergeVertices, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+import { Brush, Evaluator, ADDITION, SUBTRACTION, INTERSECTION } from 'three-bvh-csg';
+
+// ============================================================
+// Dimensions (mm), read off the tutorial sketches.
+// Scene axes: x = length (SW X), y = extrude direction (SW Z), z = width (SW Y).
+// The front plane (SW) is therefore y = 0, the top plane (SW) is z = 0.
+// ============================================================
+const DEG = Math.PI / 180;
+const DRAFT = 10 * DEG;
+const TAN_D = Math.tan(DRAFT), SIN_D = Math.sin(DRAFT), COS_D = Math.cos(DRAFT);
+
+const R_END = 16;            // Ø32 end arc, centred on the origin
+const X_TIP = 75 - R_END;    // 75 overall -> flat end at x = 59
+const H_BODY = 18;           // 凸台-拉伸1 depth
+const H_PLATE = 4;           // plate kept by 切除-拉伸1
+const R29_A = [X_TIP, 0], R29_B = [34, H_BODY];   // outer arc of the hook
+const R25_A = [34, 16], R25_B = [51, H_PLATE];    // inner arc of the hook
+
+const H_HUB = 11;            // revolve profile height
+const R_HUB = R_END - 1;     // revolve profile starts 1 mm inside the plate edge
+const WALL = 1;              // 抽壳1 thickness
+const WALL_H = WALL / COS_D; // same wall measured horizontally on the 10° cone
+const R_BORE = 3.5;          // Ø7
+const R_SCREW = 0.75;        // Ø1.5
+const R_BOLT = 8.28;         // screw hole pitch radius
+const H_BOSS = 2;            // 移动面1 distance
+const RIB_T = 1;             // 筋1 thickness
+
+const rOuter = h => R_HUB - h * TAN_D;
+const rInner = h => R_HUB - WALL_H - h * TAN_D;
+
+const V2 = (x, y) => new THREE.Vector2(x, y);
+
+// Arc through p and q with radius r, centre on the lower side.
+function arcCenterBelow(p, q, r) {
+  const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+  const dx = q[0] - p[0], dy = q[1] - p[1], len = Math.hypot(dx, dy);
+  const k = Math.sqrt(r * r - (len / 2) ** 2) / len;
+  const c1 = [mx - dy * k, my + dx * k], c2 = [mx + dy * k, my - dx * k];
+  return c1[1] < c2[1] ? c1 : c2;
+}
+
+function arcPoints(c, r, from, to, seg) {
+  const a0 = Math.atan2(from[1] - c[1], from[0] - c[0]);
+  const a1 = Math.atan2(to[1] - c[1], to[0] - c[0]);
+  const pts = [];
+  for (let i = 0; i <= seg; i++) {
+    const a = a0 + (a1 - a0) * i / seg;
+    pts.push(V2(c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)));
+  }
+  return pts;
+}
+
+const C29 = arcCenterBelow(R29_A, R29_B, 29);
+const C25 = arcCenterBelow(R25_A, R25_B, 25);
+
+// Sketch 1 offset inward by t: Ø32 arc plus two tangent lines 20° apart, cut off at the flat end.
+function teardrop(t, seg = 96) {
+  const r = R_END - t, xt = X_TIP - t;
+  const pts = [];
+  for (let i = 0; i <= seg; i++) {
+    const a = (80 + 200 * i / seg) * DEG;
+    pts.push(V2(r * Math.cos(a), r * Math.sin(a)));
+  }
+  const w = (r - xt * SIN_D) / COS_D;
+  pts.push(V2(xt, -w), V2(xt, w));
+  return pts;
+}
+
+// ============================================================
+// Tool bodies. Every brush is a closed, indexed, position-only mesh.
+// ============================================================
+function toBrush(geo) {
+  for (const name of Object.keys(geo.attributes)) if (name !== 'position') geo.deleteAttribute(name);
+  geo.clearGroups();
+  const brush = new Brush(mergeVertices(geo, 1e-5));
+  brush.updateMatrixWorld();
+  return brush;
+}
+
+// 凸台-拉伸1: the profile shrinks by h·tan10° as it rises. The solid is convex,
+// so every face can be wound away from the vertex centroid.
+function draftedTeardrop(height) {
+  const bot = teardrop(0), top = teardrop(height * TAN_D), n = bot.length;
+  const pos = [];
+  for (const p of bot) pos.push(p.x, 0, p.y);
+  for (const p of top) pos.push(p.x, height, p.y);
+  const tris = [];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    tris.push([i, j, n + j], [i, n + j, n + i]);
+  }
+  for (const [a, b, c] of THREE.ShapeUtils.triangulateShape(bot, [])) tris.push([a, b, c], [n + a, n + b, n + c]);
+
+  const P = i => new THREE.Vector3(pos[3 * i], pos[3 * i + 1], pos[3 * i + 2]);
+  const centroid = new THREE.Vector3();
+  for (let i = 0; i < 2 * n; i++) centroid.add(P(i));
+  centroid.divideScalar(2 * n);
+  const index = [];
+  for (const [a, b, c] of tris) {
+    const pa = P(a), pb = P(b), pc = P(c);
+    const normal = new THREE.Vector3().crossVectors(pb.clone().sub(pa), pc.clone().sub(pa));
+    const mid = pa.add(pb).add(pc).divideScalar(3).sub(centroid);
+    index.push(...(normal.dot(mid) >= 0 ? [a, b, c] : [a, c, b]));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(index);
+  return geo;
+}
+
+// 切除-拉伸1 (反侧切除): keep what lies inside this profile, 38 mm symmetric about z = 0.
+// The profile is padded past the part on the left and below so no faces coincide.
+function hookProfileTool() {
+  const pts = [V2(-30, -1), V2(62, -1)];
+  pts.push(...arcPoints(C29, 29, R29_A, R29_B, 40));
+  pts.push(...arcPoints(C25, 25, R25_A, R25_B, 32));
+  pts.push(V2(-30, H_PLATE));
+  const geo = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: 38, bevelEnabled: false });
+  geo.translate(0, 0, -19);
+  return geo;
+}
+
+// A 10°-drafted cone between two heights, following r(h).
+// Side walls are split into ~1 mm bands: long sliver triangles get misclassified by the booleans.
+const bands = (h0, h1) => Math.max(1, Math.ceil(h1 - h0));
+
+function cone(rAt, h0, h1, seg = 128) {
+  const geo = new THREE.CylinderGeometry(rAt(h1), rAt(h0), h1 - h0, seg, bands(h0, h1), false);
+  geo.translate(0, (h0 + h1) / 2, 0);
+  return geo;
+}
+
+function cylinder(r, h0, h1, seg, x = 0, z = 0) {
+  const geo = new THREE.CylinderGeometry(r, r, h1 - h0, seg, bands(h0, h1), false);
+  geo.translate(x, (h0 + h1) / 2, z);
+  return geo;
+}
+
+const BOLT_XZ = [[R_BOLT, 0], [0, R_BOLT], [-R_BOLT, 0], [0, -R_BOLT]];
+
+// 筋1 together with the four shortened screw bosses, as one 2D outline extruded upward.
+// Building them as a single outline avoids coplanar end faces at y = 2 in the booleans.
+function ribOutline() {
+  const hw = RIB_T / 2, rt = R_SCREW + WALL;
+  const s = Math.sqrt(rt * rt - hw * hw), al = Math.asin(hw / rt);
+  const a0 = 4, aEnd = 14.8, N = 12;
+  const pts = [];
+  for (let k = 0; k < 4; k++) {
+    const cs = Math.cos(k * Math.PI / 2), sn = Math.sin(k * Math.PI / 2);
+    const P = (a, b) => pts.push(V2(a * cs - b * sn, a * sn + b * cs));
+    P(a0, -hw);
+    P(R_BOLT - s, -hw);
+    for (let i = 1; i < N; i++) {
+      const phi = Math.PI + al + (Math.PI - 2 * al) * i / N;
+      P(R_BOLT + rt * Math.cos(phi), rt * Math.sin(phi));
+    }
+    P(R_BOLT + s, -hw);
+    P(aEnd, -hw);
+    P(aEnd, hw);
+    P(R_BOLT + s, hw);
+    for (let i = 1; i < N; i++) {
+      const phi = al + (Math.PI - 2 * al) * i / N;
+      P(R_BOLT + rt * Math.cos(phi), rt * Math.sin(phi));
+    }
+    P(R_BOLT - s, hw);
+    P(a0, hw);
+  }
+  return new THREE.Shape(pts);
+}
+
+function ribTool() {
+  const top = 10.4;
+  const geo = new THREE.ExtrudeGeometry(ribOutline(), { depth: top - H_BOSS, bevelEnabled: false, curveSegments: 1 });
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, H_BOSS, 0);
+  return geo;
+}
+
+// ============================================================
+// Booleans, memoised so each step reuses the ones before it.
+// ============================================================
+const evaluator = new Evaluator();
+evaluator.attributes = ['position'];
+evaluator.useGroups = false;
+
+const csg = (a, b, op) => evaluator.evaluate(a, b, op);
+const unionAll = list => list.reduce((acc, b) => csg(acc, b, ADDITION));
+
+const memo = new Map();
+const lazy = (key, make) => () => {
+  if (!memo.has(key)) memo.set(key, make());
+  return memo.get(key);
+};
+
+const B = {};
+B.loft = lazy('loft', () => toBrush(draftedTeardrop(H_BODY)));
+B.hookTool = lazy('hookTool', () => toBrush(hookProfileTool()));
+B.base = lazy('base', () => csg(B.loft(), B.hookTool(), INTERSECTION));
+B.revolveCut = lazy('revolveCut', () => toBrush(cone(rOuter, -0.5, H_HUB)));
+B.baseCut = lazy('baseCut', () => csg(B.base(), B.revolveCut(), SUBTRACTION));
+B.hub = lazy('hub', () => toBrush(cone(rOuter, 0, H_HUB)));
+B.holes = lazy('holes', () => unionAll([
+  toBrush(cylinder(R_BORE, -1, 12, 48)),
+  ...BOLT_XZ.map(([x, z]) => toBrush(cylinder(R_SCREW, -1, 12, 20, x, z))),
+]));
+B.hubDrilled = lazy('hubDrilled', () => csg(B.hub(), B.holes(), SUBTRACTION));
+B.cavity = lazy('cavity', () => toBrush(cone(rInner, -0.5, H_HUB - WALL)));
+B.boreTube = lazy('boreTube', () => toBrush(cylinder(R_BORE + WALL, 0, 10.6, 48)));
+B.cup = lazy('cup', () => csg(csg(B.hub(), B.cavity(), SUBTRACTION), B.boreTube(), ADDITION));
+B.bossesFull = lazy('bossesFull', () => unionAll(BOLT_XZ.map(([x, z]) => toBrush(cylinder(R_SCREW + WALL, 0, 10.6, 24, x, z)))));
+B.bossesShort = lazy('bossesShort', () => unionAll(BOLT_XZ.map(([x, z]) => toBrush(cylinder(R_SCREW + WALL, H_BOSS, 10.6, 24, x, z)))));
+// Rib ends are trimmed 0.4 mm into the wall so they fuse with it.
+B.ribs = lazy('ribs', () => csg(toBrush(ribTool()), toBrush(cone(h => rInner(h) + 0.4, 1, 10.8)), INTERSECTION));
+B.shelled = lazy('shelled', () => csg(csg(B.cup(), B.bossesFull(), ADDITION), B.holes(), SUBTRACTION));
+B.moved = lazy('moved', () => csg(csg(B.cup(), B.bossesShort(), ADDITION), B.holes(), SUBTRACTION));
+B.ribbed = lazy('ribbed', () => csg(csg(B.cup(), B.ribs(), ADDITION), B.holes(), SUBTRACTION));
+// 组合1. Merging the plate and the hub cone first, then hollowing once, gives the same solid
+// as SolidWorks' two-body route without the coincident faces that trip up mesh booleans.
+B.final = lazy('final', () => {
+  let s = csg(B.base(), toBrush(cone(rOuter, 1, H_HUB)), ADDITION);
+  s = csg(s, B.cavity(), SUBTRACTION);
+  s = csg(s, B.boreTube(), ADDITION);
+  s = csg(s, B.ribs(), ADDITION);
+  return csg(s, B.holes(), SUBTRACTION);
+});
+
+// ============================================================
+// Sketch overlays (what the tutorial draws for each feature).
+// ============================================================
+const onFront = (pts, y = 0) => pts.map(p => new THREE.Vector3(p.x, y, p.y));
+const onTop = pts => pts.map(p => new THREE.Vector3(p.x, p.y, 0));
+const ring = (r, y, x = 0, z = 0, seg = 48) =>
+  Array.from({ length: seg + 1 }, (_, i) => new THREE.Vector3(x + r * Math.cos(i / seg * 2 * Math.PI), y, z + r * Math.sin(i / seg * 2 * Math.PI)));
+const close = pts => [...pts, pts[0]];
+
+const revolveProfile = close(onTop([V2(0, 0), V2(-R_HUB, 0), V2(-rOuter(H_HUB), H_HUB), V2(0, H_HUB)]));
+const axisLine = [new THREE.Vector3(0, -3, 0), new THREE.Vector3(0, H_HUB + 3, 0)];
+
+const SKETCHES = {
+  boss1: { lines: [close(onFront(teardrop(0)))], labels: [
+    ['Ø32', [-13, 0, 11]], ['75', [21.5, 0, 19]], ['20°', [46, 0, 0]], ['拉伸 18 · 拔模 10°', [44, H_BODY, 0]],
+  ] },
+  cut1: { lines: [close(onTop([
+    V2(-R_END, 0), V2(X_TIP, 0),
+    ...arcPoints(C29, 29, R29_A, R29_B, 40),
+    ...arcPoints(C25, 25, R25_A, R25_B, 32),
+    V2(-R_END + H_PLATE * TAN_D, H_PLATE),
+  ]))], labels: [
+    ['R29', [55, 13, 0]], ['R25', [41, 8.5, 0]], ['4', [-19, 2, 0]], ['2', [31.5, 17, 0]], ['两侧对称 38', [10, 2, 18]],
+  ] },
+  revcut: { lines: [revolveProfile], dashed: [axisLine], labels: [['11', [-16.5, 6, 0]], ['1', [-15.5, -1.5, 0]]] },
+  rev1: { lines: [revolveProfile], dashed: [axisLine], labels: [['合并结果 ✕', [0, H_HUB + 4, 0]]] },
+  cut2: { lines: [ring(R_BORE, H_HUB), ...BOLT_XZ.map(([x, z]) => ring(R_SCREW, H_HUB, x, z, 20))], labels: [
+    ['Ø7', [-4.5, H_HUB + 1, 4.5]], ['4 × Ø1.5', [R_BOLT + 3.5, H_HUB + 1, 0]], ['8.28', [4.2, H_HUB + 1, 0]],
+  ] },
+  shell: { lines: [], labels: [['壁厚 1', [-15, 6, 0]]] },
+  move: { lines: BOLT_XZ.map(([x, z]) => ring(R_SCREW + WALL, H_BOSS, x, z, 24)), labels: [['端面平移 2', [R_BOLT + 3.5, H_BOSS, 3]]] },
+  rib: { lines: [
+    [new THREE.Vector3(-rInner(10), H_BOSS, 0), new THREE.Vector3(rInner(10), H_BOSS, 0)],
+    [new THREE.Vector3(0, H_BOSS, -rInner(10)), new THREE.Vector3(0, H_BOSS, rInner(10))],
+  ], labels: [['筋厚 1', [6, -1.5, 6]]] },
+  combine: { lines: [], labels: [] },
+};
+
+// ============================================================
+// Feature tree
+// ============================================================
+const ICONS = {
+  boss: '<path d="M4 14l4-2 8 2-4 2z M4 14V8l4-2v6 M16 14V8l-8-2 M8 12l8 2M4 8l8 2 4-2"/><path d="M12 3v4M10.5 4.5L12 3l1.5 1.5"/>',
+  cut: '<path d="M3 13l5-2.5 9 2.5-5 2.5z M3 13V8l5-2.5 9 2.5v5"/><path d="M8 9.5l4 1.1v3.2" stroke-dasharray="1.6 1.4"/>',
+  revolve: '<ellipse cx="10" cy="11" rx="7" ry="3"/><path d="M3 11V8.5M17 11V8.5M10 2v16" stroke-dasharray="1.6 1.4"/><path d="M14.5 6.2l2.2.3-.8 2"/>',
+  shell: '<path d="M3 13l7 3.5 7-3.5V7L10 3.5 3 7z M5.5 8.2L10 6l4.5 2.2v4l-4.5 2.3-4.5-2.3z"/>',
+  move: '<path d="M4 12l6 3 6-3-6-3z"/><path d="M10 9V2.5M8 4.5l2-2 2 2"/>',
+  rib: '<path d="M3 14l7 3.5 7-3.5M10 17.5V8M5.5 12.2L10 8l4.5 4.2"/>',
+  combine: '<rect x="3" y="6" width="8" height="8" rx="1"/><rect x="9" y="3" width="8" height="8" rx="1"/>',
+};
+
+const STEPS = [
+  { key: 'boss1', name: '凸台-拉伸1', icon: 'boss', params: '前视基准面 · 18 · 拔模 10°',
+    note: '在前视基准面画 Ø32 圆和两条夹角 20° 的切线，总长 75。给定深度 18 mm，向内拔模 10°。',
+    bodies: () => [B.loft()] },
+  { key: 'cut1', name: '切除-拉伸1', icon: 'cut', params: '上视基准面 · 两侧对称 38 · 反侧切除',
+    note: '在上视基准面画侧面轮廓，两侧对称切除 38 mm 并勾选反侧切除：只留下 4 mm 底板，以及 R29 和 R25 两段圆弧夹出来的弧形挡边。',
+    bodies: () => [B.base()] },
+  { key: 'revcut', name: '切除-旋转1', icon: 'revolve', params: '上视基准面 · 360° · 高 11',
+    note: '绕中心轴旋转切除。轮廓底边离底板外缘 1 mm，高 11 mm，斜边和 10° 拔模面平行，所以底板只剩一圈 1 mm 的边。',
+    bodies: () => [B.baseCut()] },
+  { key: 'rev1', name: '旋转1', icon: 'revolve', params: '上视基准面 · 360° · 不合并',
+    note: '用同样的轮廓做旋转凸台，取消勾选"合并结果"。它成为第二个实体，后面的开孔、抽壳和筋都只作用在它上面。',
+    bodies: () => [B.baseCut(), B.hub()] },
+  { key: 'cut2', name: '切除-拉伸2', icon: 'cut', params: 'Ø7 + 4 × Ø1.5 @ 8.28 · 完全贯穿',
+    note: '在旋转体顶面画中心 Ø7 孔和四个 Ø1.5 螺钉孔（中心距 8.28 mm），完全贯穿，特征范围只选"旋转1"。',
+    bodies: () => [B.baseCut(), B.hubDrilled()] },
+  { key: 'shell', name: '抽壳1', icon: 'shell', params: '移除底面 · 厚度 1',
+    note: '移除旋转体的底面，抽壳 1 mm。孔壁向外偏移 1 mm，自动长成中心管和四根螺钉柱。',
+    bodies: () => [B.baseCut(), B.shelled()], view: 'back' },
+  { key: 'move', name: '移动面1', icon: 'move', params: '四个螺钉柱端面 · 平移 2',
+    note: '插入 › 面 › 移动：选中四根螺钉柱的端面，平移 2 mm，端面缩进壳体内部。',
+    bodies: () => [B.baseCut(), B.moved()], view: 'back' },
+  { key: 'rib', name: '筋1', icon: 'rib', params: '厚度 1 · 垂直于草图',
+    note: '在螺钉柱端面画两条相交直线，筋厚 1 mm，拉伸方向垂直于草图，一直长到壳体顶面和侧壁。',
+    bodies: () => [B.baseCut(), B.ribbed()], view: 'back' },
+  { key: 'combine', name: '组合1', icon: 'combine', params: '添加 · 筋1 + 切除-旋转1',
+    note: '插入 › 特征 › 组合，操作类型选"添加"，把旋转体和底座合并成一个实体。模型完成。',
+    bodies: () => [B.final()] },
+];
+
+const list = document.getElementById('features');
+STEPS.forEach((s, i) => {
+  const li = document.createElement('li');
+  li.innerHTML = `<button type="button" class="feat" id="feat-${s.key}" data-i="${i}">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ICONS[s.icon]}</svg>
+    <span><span class="name">${s.name}</span><span class="params">${s.params}</span></span>
+  </button>`;
+  list.appendChild(li);
+});
+
+// ============================================================
+// Scene
+// ============================================================
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.localClippingEnabled = true;
+viewport.prepend(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.className = 'labels';
+viewport.insertBefore(labelRenderer.domElement, renderer.domElement.nextSibling);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.9;
+const key = new THREE.DirectionalLight(0xffffff, 1.3);
+key.position.set(-40, 90, 60);
+scene.add(key);
+
+const camera = new THREE.PerspectiveCamera(32, 1, 1, 2000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.12;
+controls.minDistance = 30;
+controls.maxDistance = 600;
+
+// Centre the part (x −16…59, y 0…18) on the origin; z = 0 stays the symmetry plane.
+const model = new THREE.Group();
+model.position.set(-21.5, -9, 0);
+scene.add(model);
+
+const sectionPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
+const partMat = new THREE.MeshStandardMaterial({ color: 0xc4cad1, metalness: 0.18, roughness: 0.42 });
+// Back faces: the section face when cut, otherwise a neutral fill for pinholes at T-junctions.
+const CAP_CUT = new THREE.Color(0xd8923a), CAP_FILL = new THREE.Color(0xa7aeb6);
+const capMat = new THREE.MeshBasicMaterial({ color: CAP_FILL, side: THREE.BackSide });
+const sketchMat = new THREE.LineBasicMaterial({ color: 0x1f63d6, depthTest: false, transparent: true });
+const axisMat = new THREE.LineDashedMaterial({ color: 0x1f63d6, depthTest: false, transparent: true, dashSize: 1.2, gapSize: 0.8 });
+
+// ---------- screen-space edges ----------
+// Mesh booleans leave T-junctions everywhere, so edges are found in screen space instead:
+// a G-buffer holds view normal (rgb) and view depth (a; −1 marks the section face, 0 is empty),
+// and a full-screen pass draws creases, silhouettes and the section outline from it.
+const gbufVertex = `
+  #include <common>
+  #include <clipping_planes_pars_vertex>
+  varying vec3 vN;
+  varying float vZ;
+  void main() {
+    #include <begin_vertex>
+    #include <project_vertex>
+    #include <clipping_planes_vertex>
+    vN = normalize(normalMatrix * normal);
+    vZ = -mvPosition.z;
+  }`;
+const gbufFragment = tag => `
+  #include <common>
+  #include <clipping_planes_pars_fragment>
+  varying vec3 vN;
+  varying float vZ;
+  void main() {
+    #include <clipping_planes_fragment>
+    gl_FragColor = ${tag};
+  }`;
+const gbufPartMat = new THREE.ShaderMaterial({
+  clipping: true, vertexShader: gbufVertex, fragmentShader: gbufFragment('vec4(normalize(vN), vZ)'),
+});
+const gbufCapMat = new THREE.ShaderMaterial({
+  clipping: true, side: THREE.BackSide, vertexShader: gbufVertex, fragmentShader: gbufFragment('vec4(0.0, 0.0, 1.0, -1.0)'),
+});
+
+const gbuffer = new THREE.WebGLRenderTarget(1, 1, {
+  type: THREE.HalfFloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
+});
+const outlineMat = new THREE.ShaderMaterial({
+  uniforms: {
+    tG: { value: gbuffer.texture },
+    texel: { value: new THREE.Vector2() },
+    ss: { value: 1 },
+    ink: { value: new THREE.Vector3(0x22 / 255, 0x2c / 255, 0x37 / 255) },
+  },
+  vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+  fragmentShader: `
+    uniform sampler2D tG;
+    uniform vec2 texel;
+    uniform int ss;
+    uniform vec3 ink;
+    varying vec2 vUv;
+    // Edge strength between neighbouring pixels c and s.
+    float edge(vec4 c, vec4 s) {
+      bool emptyC = c.a == 0.0, emptyS = s.a == 0.0;
+      if (emptyC && emptyS) return 0.0;
+      if (emptyC != emptyS) return 1.0;
+      bool capC = c.a < 0.0, capS = s.a < 0.0;
+      if (capC && capS) return 0.0;
+      if (capC != capS) return 1.0;
+      float crease = smoothstep(0.07, 0.14, 1.0 - dot(c.xyz, s.xyz));
+      vec4 near = c.a < s.a ? c : s;
+      float jump = abs(s.a - c.a) / min(c.a, s.a) * max(abs(near.z), 0.08);
+      return max(crease, smoothstep(0.004, 0.009, jump));
+    }
+    // A real edge holds for two pixels in a row; a pixel that differs from both
+    // opposite neighbours is a pinhole or sliver left by the booleans, so skip it.
+    float axis(vec2 uv, vec4 c, vec2 d) {
+      float p1 = edge(c, texture2D(tG, uv + d)), p2 = edge(c, texture2D(tG, uv + 2.0 * d));
+      float m1 = edge(c, texture2D(tG, uv - d)), m2 = edge(c, texture2D(tG, uv - 2.0 * d));
+      return max(min(p1, p2), min(m1, m2)) * (1.0 - min(p1, m1));
+    }
+    void main() {
+      float sum = 0.0;
+      for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) {
+        if (i >= ss || j >= ss) continue;
+        vec2 uv = vUv + (vec2(float(i), float(j)) - 0.5 * float(ss - 1)) * texel;
+        vec4 c = texture2D(tG, uv);
+        sum += max(axis(uv, c, vec2(texel.x, 0.0)), axis(uv, c, vec2(0.0, texel.y)));
+      }
+      gl_FragColor = vec4(ink, 0.85 * sum / float(ss * ss));
+    }`,
+  transparent: true, depthTest: false, depthWrite: false,
+});
+const outlineScene = new THREE.Scene();
+const outlineQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), outlineMat);
+outlineQuad.frustumCulled = false;
+outlineScene.add(outlineQuad);
+const outlineCamera = new THREE.OrthographicCamera();
+
+const SKETCH_LAYER = 1;
+
+// Display mesh for a brush: drop zero-area slivers, crease normals at 30°.
+const displayCache = new Map();
+function display(brush) {
+  if (displayCache.has(brush)) return displayCache.get(brush);
+  const src = brush.geometry.index ? brush.geometry.toNonIndexed() : brush.geometry;
+  const p = src.attributes.position.array;
+  const out = [];
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  let volume = 0;
+  for (let i = 0; i < p.length; i += 9) {
+    a.fromArray(p, i); b.fromArray(p, i + 3); c.fromArray(p, i + 6);
+    const cross = new THREE.Vector3().crossVectors(b.clone().sub(a), c.clone().sub(a));
+    if (cross.lengthSq() < 1e-12) continue;
+    volume += a.dot(new THREE.Vector3().crossVectors(b, c)) / 6;
+    for (let k = 0; k < 9; k++) out.push(p[i + k]);
+  }
+  let geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
+  geo = toCreasedNormals(geo, 30 * DEG);
+  geo.computeBoundingBox();
+  const entry = { geo, volume, box: geo.boundingBox };
+  displayCache.set(brush, entry);
+  return entry;
+}
+
+function buildStepGroup(step) {
+  const group = new THREE.Group();
+  for (const brush of step.bodies()) {
+    const d = display(brush);
+    const mesh = new THREE.Mesh(d.geo, partMat);
+    mesh.userData.gbuf = gbufPartMat;
+    const cap = new THREE.Mesh(d.geo, capMat);
+    cap.name = 'cap';
+    cap.userData.gbuf = gbufCapMat;
+    group.add(mesh, cap);
+  }
+  const sk = new THREE.Group();
+  sk.name = 'sketch';
+  const def = SKETCHES[step.key];
+  for (const pts of def.lines) {
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), sketchMat);
+    line.layers.set(SKETCH_LAYER);
+    sk.add(line);
+  }
+  for (const pts of def.dashed || []) {
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), axisMat);
+    line.computeLineDistances();
+    line.layers.set(SKETCH_LAYER);
+    sk.add(line);
+  }
+  for (const [text, [x, y, z]] of def.labels) {
+    const el = document.createElement('div');
+    el.className = 'dim';
+    el.textContent = text;
+    const label = new CSS2DObject(el);
+    label.position.set(x, y, z);
+    label.layers.set(SKETCH_LAYER);
+    sk.add(label);
+  }
+  sk.visible = state.sketch;
+  group.add(sk);
+  return group;
+}
+
+// ============================================================
+// State and UI
+// ============================================================
+const state = { step: STEPS.length - 1, section: false, sketch: true, edges: true, view: 'iso' };
+const groups = new Map();
+let needsRender = true;
+
+const fmt = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+
+function setCSS2DVisible(group, visible) {
+  group.traverse(o => { if (o.isCSS2DObject) o.element.hidden = !visible; });
+}
+
+function showStep(i) {
+  state.step = i;
+  const step = STEPS[i];
+  if (!groups.has(i)) {
+    const g = buildStepGroup(step);
+    groups.set(i, g);
+    model.add(g);
+  }
+  groups.forEach((g, k) => {
+    g.visible = k === i;
+    setCSS2DVisible(g, k === i && state.sketch);
+  });
+  // Shell, move face and rib only show from underneath. Follow the step's preferred view
+  // unless the viewer picked 前视/上视 or rotated by hand.
+  const want = step.view || 'iso';
+  if ((state.view === 'iso' || state.view === 'back') && state.view !== want && window.__modelReady) setView(want);
+
+  document.querySelectorAll('.feat').forEach((btn, k) => {
+    if (k === i) btn.setAttribute('aria-current', 'step'); else btn.removeAttribute('aria-current');
+    btn.classList.toggle('rolled', k > i);
+    btn.classList.toggle('last', k === STEPS.length - 1);
+  });
+  document.getElementById('note').innerHTML = `<strong>${i + 1} / ${STEPS.length} · ${step.name}</strong>${step.note}`;
+  document.getElementById('where').innerHTML = `<b>${i + 1}/${STEPS.length}</b>${step.name}`;
+  document.getElementById('prev').disabled = i === 0;
+  document.getElementById('next').disabled = i === STEPS.length - 1;
+
+  const bodies = step.bodies().map(display);
+  const vol = bodies.reduce((s, d) => s + d.volume, 0);
+  const box = new THREE.Box3();
+  bodies.forEach(d => box.union(d.box));
+  const size = box.getSize(new THREE.Vector3());
+  document.getElementById('stat-vol').textContent = `${fmt.format(vol)} mm³`;
+  document.getElementById('stat-bodies').textContent = `${bodies.length}`;
+  document.getElementById('stat-box').textContent = `${fmt.format(size.x)} × ${fmt.format(size.z)} × ${fmt.format(size.y)}`;
+  needsRender = true;
+}
+
+function applyToggles() {
+  const planes = state.section ? [sectionPlane] : [];
+  for (const m of [partMat, capMat, gbufPartMat, gbufCapMat]) {
+    m.clippingPlanes = planes;
+    m.needsUpdate = true;
+  }
+  capMat.color.copy(state.section ? CAP_CUT : CAP_FILL);
+  groups.forEach((g, k) => {
+    g.traverse(o => {
+      if (o.name === 'sketch') o.visible = state.sketch;
+    });
+    setCSS2DVisible(g, k === state.step && state.sketch);
+  });
+  for (const t of ['section', 'sketch', 'edges']) {
+    document.getElementById(`toggle-${t}`).setAttribute('aria-pressed', String(state[t]));
+  }
+  needsRender = true;
+}
+
+// ---------- camera views ----------
+const VIEWS = {
+  iso: new THREE.Vector3(-0.62, 0.72, 1).normalize(),
+  front: new THREE.Vector3(0, 1, -0.0001).normalize(),
+  top: new THREE.Vector3(0, 0, 1),
+  back: new THREE.Vector3(0, -1, 0.0001).normalize(),
+};
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tween = null;
+
+function fitDistance() {
+  // Keep a ~84 mm wide, ~52 mm tall frame in view at any aspect ratio.
+  const vFov = camera.fov * DEG;
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+  return Math.max(26 / Math.tan(vFov / 2), 42 / Math.tan(hFov / 2));
+}
+
+function setView(name, animate = true) {
+  state.view = name;
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+  const to = VIEWS[name].clone().multiplyScalar(fitDistance());
+  const from = camera.position.clone();
+  const fromTarget = controls.target.clone();
+  if (!animate || reduceMotion) {
+    camera.position.copy(to);
+    controls.target.set(0, 0, 0);
+    tween = null;
+    needsRender = true;
+    return;
+  }
+  // Slerp the direction so the camera swings around the part instead of cutting through it.
+  const r0 = from.length(), r1 = to.length();
+  const q = new THREE.Quaternion().setFromUnitVectors(from.clone().normalize(), to.clone().normalize());
+  tween = { t0: performance.now(), dur: 520, from, r0, r1, q, fromTarget };
+}
+
+function stepTween(now) {
+  if (!tween) return false;
+  const t = Math.min(1, (now - tween.t0) / tween.dur);
+  const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const q = new THREE.Quaternion().slerp(tween.q, e);
+  const dir = tween.from.clone().normalize().applyQuaternion(q);
+  camera.position.copy(dir.multiplyScalar(tween.r0 + (tween.r1 - tween.r0) * e));
+  controls.target.lerpVectors(tween.fromTarget, new THREE.Vector3(), e);
+  if (t >= 1) tween = null;
+  return true;
+}
+
+controls.addEventListener('start', () => {
+  tween = null;
+  if (state.view) {
+    state.view = null;
+    document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  }
+});
+controls.addEventListener('change', () => { needsRender = true; });
+
+// ---------- sizing and render loop ----------
+function resize() {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  labelRenderer.setSize(w, h);
+  // Supersample the G-buffer 2× on low-density screens so the outlines come out antialiased.
+  const ss = renderer.getPixelRatio() < 1.5 ? 2 : 1;
+  const buf = renderer.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(ss);
+  gbuffer.setSize(buf.x, buf.y);
+  outlineMat.uniforms.texel.value.set(1 / buf.x, 1 / buf.y);
+  outlineMat.uniforms.ss.value = ss;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  needsRender = true;
+}
+new ResizeObserver(resize).observe(viewport);
+resize();
+setView('iso', false);
+
+renderer.autoClear = false;
+function render() {
+  renderer.setRenderTarget(null);
+  renderer.clear();
+  camera.layers.set(0);
+  renderer.render(scene, camera);
+
+  if (state.edges) {
+    const swapped = [];
+    const hidden = [];
+    model.traverseVisible(o => {
+      if (!o.isMesh || !o.userData.gbuf) return;
+      if (o.name === 'cap' && !state.section) { hidden.push(o); return; }
+      swapped.push([o, o.material]);
+      o.material = o.userData.gbuf;
+    });
+    hidden.forEach(o => { o.visible = false; });
+    renderer.setRenderTarget(gbuffer);
+    renderer.clear();
+    renderer.render(scene, camera);
+    for (const [o, m] of swapped) o.material = m;
+    hidden.forEach(o => { o.visible = true; });
+    renderer.setRenderTarget(null);
+    renderer.render(outlineScene, outlineCamera);
+  }
+
+  camera.layers.set(SKETCH_LAYER);
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(now => {
+  const moving = stepTween(now);
+  const damped = controls.update();
+  if (moving || damped || needsRender) {
+    render();
+    needsRender = false;
+  }
+});
+
+// ---------- inputs ----------
+list.addEventListener('click', e => {
+  const btn = e.target.closest('.feat');
+  if (btn) showStep(Number(btn.dataset.i));
+});
+document.getElementById('prev').addEventListener('click', () => state.step > 0 && showStep(state.step - 1));
+document.getElementById('next').addEventListener('click', () => state.step < STEPS.length - 1 && showStep(state.step + 1));
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', () => {
+  state[b.dataset.toggle] = !state[b.dataset.toggle];
+  applyToggles();
+}));
+window.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, select') || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === 'ArrowLeft' && state.step > 0) { showStep(state.step - 1); e.preventDefault(); }
+  if (e.key === 'ArrowRight' && state.step < STEPS.length - 1) { showStep(state.step + 1); e.preventDefault(); }
+});
+
+// ---------- first build ----------
+// Let the loading message paint before the booleans block the main thread.
+await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+showStep(STEPS.length - 1);
+applyToggles();
+document.getElementById('loading').hidden = true;
+window.__modelReady = true;
+
+// Warm the remaining steps in the background so rolling back is instant.
+const pending = STEPS.map((_, i) => i).filter(i => i !== state.step);
+function warm() {
+  const i = pending.shift();
+  if (i === undefined) return;
+  STEPS[i].bodies().forEach(display);
+  setTimeout(warm, 16);
+}
+setTimeout(warm, 200);
+</script>
+</body>
+</html>
