@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clawd on Bass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #130c24;
+    --panel: #1b1233;
+    --ink: #eee8ff;
+    --muted: #a69bc8;
+    --faint: #2a2048;
+    --clawd: #d97757;
+    --gold: #f5c46a;
+    --gold-hi: #ffe3a1;
+    --pixel: "Silkscreen", "JetBrains Mono", ui-monospace, monospace;
+    --mono: "JetBrains Mono", ui-monospace, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", monospace;
+  }
+  html, body { background: var(--ground); }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 14px/1.55 var(--mono);
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 28px 44px;
+    display: grid;
+    gap: 18px;
+  }
+  header { display: grid; gap: 6px; }
+  h1 {
+    margin: 0;
+    font: 700 clamp(28px, 6vw, 44px)/1 var(--pixel);
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+  }
+  h1 span { color: var(--clawd); }
+  header p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+  .stage {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #24174d;
+    box-shadow: 0 0 0 1px #3a2a6e, 0 28px 70px -30px rgba(140, 100, 255, 0.55);
+  }
+  #stage {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 56 / 40;
+    image-rendering: pixelated;
+    cursor: pointer;
+    outline: none;
+  }
+  .stage:has(#stage:focus-visible) { box-shadow: 0 0 0 2px var(--gold), 0 28px 70px -30px rgba(140, 100, 255, 0.55); }
+  .hint {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    margin: 0;
+    font: 400 11px/1 var(--pixel);
+    color: rgba(238, 232, 255, 0.72);
+    letter-spacing: 0.06em;
+    pointer-events: none;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 22px;
+  }
+  .sound {
+    font: 600 14px/1 var(--mono);
+    color: #1d0f09;
+    background: var(--clawd);
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 16px;
+    cursor: pointer;
+  }
+  .sound[aria-pressed="true"] {
+    color: var(--ink);
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--clawd);
+  }
+  .sound:focus-visible, input[type="range"]:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .tempo {
+    flex: 1 1 240px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+  }
+  .tempo input { flex: 1; min-width: 0; accent-color: var(--clawd); }
+  .tempo output {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    min-width: 7ch;
+    text-align: right;
+  }
+
+  .groove {
+    display: grid;
+    grid-template-columns: 9.5rem minmax(0, 1fr);
+    gap: 14px 22px;
+    align-items: start;
+    padding-top: 16px;
+    border-top: 1px solid var(--faint);
+  }
+  .now .label, .roll-wrap .label {
+    margin: 0 0 6px;
+    font: 400 11px/1 var(--pixel);
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .note {
+    font: 700 40px/1 var(--pixel);
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+  .detail { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+  .roll {
+    display: grid;
+    grid-template-columns: 2.2em repeat(32, minmax(0, 1fr));
+    grid-auto-rows: 11px;
+    gap: 2px;
+  }
+  .roll .k {
+    font: 400 10px/11px var(--pixel);
+    color: var(--muted);
+  }
+  .roll .c { background: #211740; }
+  .roll .c.q { background: #2a1e50; }
+  .roll .c.bar { box-shadow: inset 1px 0 0 #4a3a80; }
+  .roll .c.on { background: var(--gold); }
+  .roll .c.hold { background: #b98a3a; }
+  .roll .c.now { background: #5a3f9c; }
+  .roll .c.on.now, .roll .c.hold.now { background: var(--gold-hi); }
+  .roll-wrap .foot { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+
+  @media (max-width: 560px) {
+    .groove { grid-template-columns: 1fr; }
+    .roll { gap: 1px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Clawd <span>on</span> Bass</h1>
+    <p>一段两小节的 funk bass 律动，E 小调五声音阶。整个舞台是 56×40 像素的 Canvas 逐帧绘制，没有用任何图片。</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="stage" tabindex="0" role="button" aria-label="舞台：点一下让 Clawd 来一段滑音 solo"></canvas>
+    <p class="hint">TAP FOR A SOLO</p>
+  </div>
+
+  <div class="controls">
+    <button class="sound" id="sound" type="button" aria-pressed="false">打开声音</button>
+    <label class="tempo" for="bpm">速度
+      <input id="bpm" type="range" min="72" max="140" step="1" value="104">
+      <output id="bpmOut" for="bpm">104 BPM</output>
+    </label>
+  </div>
+
+  <section class="groove" aria-label="当前律动">
+    <div class="now">
+      <p class="label">NOW PLAYING</p>
+      <div class="note" id="noteName">E1</div>
+      <p class="detail" id="noteDetail">41.2 Hz · E 弦空弦</p>
+    </div>
+    <div class="roll-wrap">
+      <p class="label">GROOVE · 2 BARS · 4/4</p>
+      <div class="roll" id="roll"></div>
+      <p class="foot">每格一个 16 分音符。底鼓在每小节第 1、8、9 格，军鼓在 2、4 拍。</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- stage + palette ----------
+  const LW = 56, LH = 40, CELL = 4;
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+  const bgOff = document.createElement("canvas");
+  const fgOff = document.createElement("canvas");
+  bgOff.width = fgOff.width = LW;
+  bgOff.height = fgOff.height = LH;
+  const bgCtx = bgOff.getContext("2d");
+  const fgCtx = fgOff.getContext("2d");
+  const bgImg = bgCtx.createImageData(LW, LH);
+  const fgImg = fgCtx.createImageData(LW, LH);
+  const bg32 = new Uint32Array(bgImg.data.buffer);
+  const fg32 = new Uint32Array(fgImg.data.buffer);
+
+  // hex -> little-endian RGBA packed into a Uint32
+  const px = (h) => {
+    const n = parseInt(h.slice(1), 16);
+    return (0xff000000 | ((n & 0xff) << 16) | (n & 0xff00) | (n >>> 16)) >>> 0;
+  };
+
+  const RAMP = ["#22164a", "#2c1d5e", "#382676", "#4a3292", "#6246b3", "#7f64cf", "#9f89e3", "#bcaef2"].map(px);
+  const C = {
+    O: px("#d97757"),   // Clawd
+    o: px("#b75c3e"),   // Clawd side shade
+    E: px("#1b1216"),   // eyes
+    K: px("#16111d"),   // bass outline / neck back
+    D: px("#2d2a3b"),   // bass body
+    B: px("#8c89d9"),   // pickguard + headstock
+    b: px("#6f6bc0"),   // pickguard shade
+    F: px("#4a3a4d"),   // fingerboard
+    W: px("#dcd8ee"),   // fret dots, bridge, vibrating string
+    g1: px("#fff0c4"), g2: px("#f5c46a"), g3: px("#c98f3c"),
+  };
+
+  // Where Clawd's body (local 0,0) sits on the stage.
+  const BX = 15, BY = 13;
+  const SPOT_X = BX + 10, SPOT_Y = BY + 8;
+
+  // ---------- the bass, rasterised once in Clawd-local coords ----------
+  // Axis runs up-right at 45°: along = x - y, across = x + y. Strings sit on across = 20.
+  const bass = new Map();
+  (function buildBass() {
+    const lower = { x: 10.3, y: 10.4, r: 3.9 };
+    const upper = { x: 12.9, y: 7.9, r: 2.4 };
+    const inside = (x, y) =>
+      Math.hypot(x - lower.x, y - lower.y) <= lower.r || Math.hypot(x - upper.x, y - upper.y) <= upper.r;
+    const key = (x, y) => x + "," + y;
+    for (let y = 2; y <= 17; y++) {
+      for (let x = 2; x <= 18; x++) {
+        if (inside(x, y)) {
+          const edge = !inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1);
+          let c = "D";
+          if (x + y >= 21 && !edge) c = x + y === 21 ? "b" : "B";
+          if (x - y === 0 && x + y >= 18 && x + y <= 23) c = "K";                          // pickup
+          if ((x - y === -4 || x - y === -5) && (x + y === 20 || x + y === 21)) c = "W";   // bridge
+          bass.set(key(x, y), c);
+        }
+      }
+    }
+    // outline
+    for (let y = 1; y <= 18; y++) {
+      for (let x = 1; x <= 19; x++) {
+        if (inside(x, y)) continue;
+        let near = false;
+        for (let dy = -1; dy <= 1 && !near; dy++)
+          for (let dx = -1; dx <= 1; dx++) if (inside(x + dx, y + dy)) { near = true; break; }
+        if (near) bass.set(key(x, y), "K");
+      }
+    }
+  })();
+  const bassPixels = [...bass].map(([k, c]) => { const [x, y] = k.split(",").map(Number); return [x, y, c]; });
+
+  // Neck: fingerboard on across=20, back on across=21, from the body joint up to the nut.
+  const NECK_LEN = 6;                                  // index 0 = nut, 5 = body joint
+  const neckF = (i) => [20 - i, i];
+  const neckK = (i) => [21 - i, i];
+  const FRET_DOTS = new Set([2, 4]);
+
+  // ---------- the groove ----------
+  const N = (m, len = 1) => ({ m, len });
+  const PATTERN = [
+    N(28, 2), null, N(40), null,  null, N(28), N(31), null,  N(33, 2), null, N(28), null,  N(31), N(33), N(35), N(38),
+    N(28, 2), null, N(40), null,  null, N(28), N(31), null,  N(33), N(33), null, N(35, 2),  null, N(40), N(38), N(35),
+  ];
+  const KICK = new Set([0, 7, 8]);
+  const SNARE = new Set([4, 12]);
+  const NAMES = { 28: "E1", 31: "G1", 33: "A1", 35: "B1", 38: "D2", 40: "E2" };
+  // where a bassist in first position would play it, and where the fretting hand sits on the neck
+  const FING = {
+    28: { txt: "E 弦空弦", pos: null },
+    31: { txt: "E 弦 3 品", pos: 2 },
+    33: { txt: "E 弦 5 品", pos: 3 },
+    35: { txt: "E 弦 7 品", pos: 4 },
+    38: { txt: "A 弦 5 品", pos: 3 },
+    40: { txt: "A 弦 7 品", pos: 4 },
+  };
+  const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+  // ---------- clock + scheduler ----------
+  let bpm = 104;
+  const stepDur = () => 60 / bpm / 4;
+  let actx = null, master = null, noiseBuf = null, soundOn = false;
+  let manual = false, manualT = 0;
+  const clock = () => (manual ? manualT : soundOn && actx ? actx.currentTime : performance.now() / 1000);
+
+  let stepIndex = 0, nextTime = clock() + 0.1;
+  const events = [];
+
+  function schedule(now) {
+    if (nextTime < now - 0.25) nextTime = now + 0.02;   // tab was hidden: skip ahead instead of bursting
+    while (nextTime < now + 0.12) {
+      const i = stepIndex % 32;
+      if (soundOn && actx) playStep(i, nextTime);
+      events.push({ i, t: nextTime });
+      nextTime += stepDur();
+      stepIndex++;
+    }
+  }
+
+  // ---------- audio ----------
+  function initAudio() {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.ratio.value = 4;
+    master = actx.createGain();
+    master.gain.value = 0.8;
+    master.connect(comp).connect(actx.destination);
+    noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+
+  function bassVoice(t, freqFrom, freqTo, dur) {
+    const saw = actx.createOscillator();
+    const sub = actx.createOscillator();
+    saw.type = "sawtooth";
+    sub.type = "sine";
+    for (const o of [saw, sub]) {
+      o.frequency.setValueAtTime(freqFrom, t);
+      if (freqTo !== freqFrom) o.frequency.exponentialRampToValueAtTime(freqTo, t + dur * 0.8);
+    }
+    const lp = actx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 6;
+    lp.frequency.setValueAtTime(1500, t);
+    lp.frequency.exponentialRampToValueAtTime(240, t + 0.16);
+    const g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.5, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.1);
+    g.gain.setValueAtTime(0.3, t + dur);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.07);
+    const sg = actx.createGain();
+    sg.gain.value = 0.55;
+    saw.connect(lp).connect(g);
+    sub.connect(sg).connect(g);
+    g.connect(master);
+    saw.start(t); sub.start(t);
+    saw.stop(t + dur + 0.1); sub.stop(t + dur + 0.1);
+  }
+
+  function noiseHit(t, type, freq, q, peak, decay) {
+    const src = actx.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = actx.createBiquadFilter();
+    f.type = type;
+    f.frequency.value = freq;
+    f.Q.value = q;
+    const g = actx.createGain();
+    g.gain.setValueAtTime(peak, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    src.connect(f).connect(g).connect(master);
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + decay + 0.02);
+  }
+
+  function kick(t) {
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(46, t + 0.11);
+    g.gain.setValueAtTime(0.9, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + 0.32);
+  }
+
+  function playStep(i, t) {
+    const s16 = i % 16;
+    const n = PATTERN[i];
+    if (n) { const f = mtof(n.m); bassVoice(t, f, f, n.len * stepDur() * 0.82); }
+    if (KICK.has(s16)) kick(t);
+    if (SNARE.has(s16)) noiseHit(t, "bandpass", 1900, 0.9, 0.42, 0.16);
+    if (s16 % 2 === 0 || s16 === 15) noiseHit(t, "highpass", 7500, 0.7, s16 % 4 === 2 ? 0.14 : 0.07, 0.045);
+  }
+
+  // ---------- animation state ----------
+  let dipUntil = -1, tapUntil = -1, pulseT = -9, pluckT = -9, vibUntil = -1;
+  let handPos = 3, handTarget = 3, curStep = 0;
+  let encoreT = -9;
+  let lastNow = clock();
+  const particles = [];
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function spawnSpark(x, y, burst) {
+    const a = burst ? Math.random() * Math.PI * 2 : -0.2 - Math.random() * 0.9;
+    const sp = burst ? 14 + Math.random() * 16 : 9 + Math.random() * 12;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * sp + (burst ? 0 : 5),
+      vy: Math.sin(a) * sp,
+      life: 0, max: 0.55 + Math.random() * 0.6,
+      shape: Math.random() < 0.35 ? "plus" : Math.random() < 0.5 ? "ell" : "dot",
+      flip: Math.random() < 0.5,
+    });
+  }
+  function spawnGlyph() {
+    particles.push({ x: BX + 25, y: BY + 2, vx: 5 + Math.random() * 3, vy: -6, life: 0, max: 1.8, shape: "note", wob: Math.random() * 6 });
+  }
+
+  function handleStep(ev) {
+    const i = ev.i, s16 = i % 16;
+    curStep = i;
+    markRoll(i);
+    if (s16 % 4 === 0) dipUntil = ev.t + stepDur() * 1.6;
+    if (KICK.has(s16)) pulseT = ev.t;
+    if (SNARE.has(s16)) tapUntil = ev.t + stepDur() * 1.5;
+    const n = PATTERN[i];
+    if (n) {
+      pluckT = ev.t;
+      vibUntil = ev.t + n.len * stepDur() + 0.1;
+      const f = FING[n.m];
+      if (f.pos !== null) handTarget = f.pos;
+      showNote(n.m);
+      const count = reduceMotion.matches ? 1 : 2 + (s16 % 4 === 0 ? 1 : 0);
+      for (let k = 0; k < count; k++) spawnSpark(BX + 16, BY + 10, false);
+    }
+    if (s16 === 0 && !reduceMotion.matches) spawnGlyph();
+  }
+
+  function encore() {
+    const now = clock();
+    encoreT = now;
+    for (let k = 0; k < (reduceMotion.matches ? 6 : 18); k++) spawnSpark(BX + 12, BY + 8, true);
+    if (soundOn && actx) bassVoice(actx.currentTime + 0.01, mtof(52), mtof(28), 0.55);
+  }
+
+  // ---------- drawing ----------
+  const hash = new Float32Array(LW * LH);
+  for (let i = 0; i < hash.length; i++) {
+    const s = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
+    hash[i] = (s - Math.floor(s)) * 2 - 1;
+  }
+
+  function drawBg(now) {
+    const t = reduceMotion.matches ? 0 : now;
+    const pulse = reduceMotion.matches ? 0 : Math.max(0, 1 - (now - pulseT) / 0.32);
+    const R = 15.5 + pulse * 2.6;
+    for (let y = 0; y < LH; y++) {
+      for (let x = 0; x < LW; x++) {
+        const idx = y * LW + x;
+        // slow drifting light, like stage haze
+        const a = 0.5 + 0.5 * Math.sin(x * 0.16 + t * 0.45 + Math.sin(y * 0.2 - t * 0.35) * 1.4) * Math.cos(y * 0.12 + t * 0.22 - x * 0.03);
+        let lvl = Math.floor(a * 2.9);
+        // spotlight on Clawd
+        const d = Math.hypot(x - SPOT_X, (y - SPOT_Y) * 1.12) + hash[idx] * 0.9;
+        if (d < R) lvl = Math.max(lvl, d < R * 0.5 ? 7 : d < R * 0.7 ? 6 : d < R * 0.87 ? 5 : 4);
+        // shadow under the feet
+        if (y === BY + 16 && x >= BX - 1 && x <= BX + 16) lvl -= 2;
+        bg32[idx] = RAMP[Math.max(0, Math.min(7, lvl))];
+      }
+    }
+  }
+
+  const put = (x, y, c) => {
+    if (x < 0 || y < 0 || x >= LW || y >= LH) return;
+    fg32[y * LW + x] = c;
+  };
+
+  function drawFg(now) {
+    fg32.fill(0);
+    const sd = stepDur();
+    const dip = now < dipUntil ? 1 : 0;
+    const encoring = now - encoreT < 1.3;
+    const tap = now < tapUntil;
+    const ox = BX, oy = BY + dip;
+
+    // legs stay planted; the body squashes into them on each beat
+    const legTop = BY + 12 + dip;
+    const legs = [[0, "o"], [4, "O"], [10, "O"], [13, "O"]];
+    for (const [lx, c] of legs) {
+      const lift = lx === 13 && tap ? 1 : 0;
+      for (let y = legTop; y <= BY + 15 - lift; y++) {
+        put(BX + lx, y, C[c]);
+        put(BX + lx + 1, y, C[c === "o" ? "o" : "O"]);
+      }
+    }
+
+    // body
+    for (let y = 0; y < 12; y++) {
+      for (let x = 0; x < 16; x++) {
+        if (y === 0 && x === 0) continue;
+        put(ox + x, oy + y, x < 2 ? C.o : C.O);
+      }
+    }
+    for (let y = 6; y <= 9; y++) put(ox - 1, oy + y, C.o);   // arm stub
+
+    // eyes: squinting into the groove, open for the fill, happy during a solo
+    if (encoring) {
+      for (const ex of [4, 12]) { put(ox + ex, oy + 4, C.E); put(ox + ex + 1, oy + 3, C.E); put(ox + ex + 2, oy + 4, C.E); }
+    } else if (curStep >= 28) {
+      for (const ex of [5, 13]) for (let y = 2; y <= 4; y++) put(ox + ex, oy + y, C.E);
+    } else {
+      for (const ex of [4, 12]) for (let k = 0; k < 3; k++) put(ox + ex + k, oy + 3, C.E);
+    }
+
+    // bass body
+    for (const [x, y, c] of bassPixels) put(ox + x, oy + y, C[c]);
+
+    // fretting hand glides along the neck (slides the whole neck during a solo)
+    if (encoring) handTarget = Math.min(NECK_LEN - 1, ((now - encoreT) / 0.5) * (NECK_LEN - 1));
+    const k = 1 - Math.pow(0.0005, Math.max(0, Math.min(0.05, now - lastNow)));
+    handPos += (handTarget - handPos) * k;
+    const hp = Math.round(handPos);
+
+    // vibrating string: from the fretted note down to the bridge
+    const vib = now < vibUntil;
+    const par = Math.floor(now * 30) & 1;
+
+    // neck
+    for (let i = 0; i < NECK_LEN; i++) {
+      const [fx, fy] = neckF(i), [kx, ky] = neckK(i);
+      let c = FRET_DOTS.has(i) ? C.W : C.F;
+      if (vib && i >= hp && ((i + par) & 1)) c = C.W;
+      put(ox + fx, oy + fy, c);
+      put(ox + kx, oy + ky, C.K);
+    }
+    // string across the body
+    if (vib) for (let a = -2; a <= 8; a += 2) if (((a >> 1) + par) & 1) put(ox + (a + 20) / 2, oy + (20 - a) / 2, C.W);
+
+    // headstock + tuning pegs
+    for (let x = 20; x <= 25; x++) put(ox + x, oy - 1, C.B);
+    for (let x = 22; x <= 24; x++) put(ox + x, oy, C.b);
+    for (const x of [21, 23, 25]) put(ox + x, oy - 2, C.K);
+    put(ox + 20, oy - 1, C.W);  // nut
+
+    // fretting hand: sits just behind the neck
+    const [hx, hy] = neckK(hp);
+    put(ox + hx + 1, oy + hy, C.O);
+    put(ox + hx + 2, oy + hy, C.O);
+    put(ox + hx + 1, oy + hy + 1, C.o);
+    put(ox + hx + 2, oy + hy + 1, C.O);
+
+    // plucking hand: rests below the strings, swipes through them on each note
+    const plucking = now - pluckT < Math.min(0.08, sd * 0.6);
+    const px0 = ox + (plucking ? 11 : 12), py0 = oy + (plucking ? 9 : 10);
+    put(px0, py0, C.O); put(px0 + 1, py0, C.O);
+    put(px0, py0 + 1, C.o); put(px0 + 1, py0 + 1, C.O);
+
+    // particles
+    const dt = Math.max(0, Math.min(0.05, now - lastNow));
+    for (let p = particles.length - 1; p >= 0; p--) {
+      const q = particles[p];
+      q.life += dt;
+      if (q.life >= q.max) { particles.splice(p, 1); continue; }
+      q.x += q.vx * dt;
+      q.y += q.vy * dt;
+      q.vx *= 1 - 1.6 * dt;
+      q.vy = q.vy * (1 - 1.6 * dt) - (q.shape === "note" ? 0 : 3 * dt);
+      const f = 1 - q.life / q.max;
+      const col = f > 0.66 ? C.g1 : f > 0.33 ? C.g2 : C.g3;
+      const x = Math.round(q.x), y = Math.round(q.y);
+      if (q.shape === "note") {
+        const wx = x + Math.round(Math.sin(q.life * 5 + q.wob));
+        // an eighth note, 4x6
+        const G = [".#..", ".##.", ".#.#", ".#..", "##..", "##.."];
+        G.forEach((row, gy) => [...row].forEach((ch, gx) => ch === "#" && put(wx + gx, y + gy, col)));
+      } else if (q.shape === "plus" && f > 0.45) {
+        put(x, y, col); put(x - 1, y, col); put(x + 1, y, col); put(x, y - 1, col); put(x, y + 1, col);
+      } else if (q.shape === "ell" && f > 0.3) {
+        put(x, y, col); put(x + (q.flip ? -1 : 1), y, col); put(x, y - 1, col);
+      } else {
+        put(x, y, col);
+      }
+    }
+  }
+
+  // ---------- canvas sizing ----------
+  let scale = 8;
+  function resize() {
+    const w = canvas.getBoundingClientRect().width || 640;
+    const dpr = window.devicePixelRatio || 1;
+    scale = Math.max(2, Math.round((w * dpr) / LW));
+    canvas.width = LW * scale;
+    canvas.height = LH * scale;
+  }
+  new ResizeObserver(resize).observe(canvas);
+  resize();
+
+  function composite() {
+    bgCtx.putImageData(bgImg, 0, 0);
+    fgCtx.putImageData(fgImg, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    const W = canvas.width, H = canvas.height;
+    ctx.drawImage(bgOff, 0, 0, W, H);
+    // tile grid behind the sprite
+    const lw = Math.max(1, Math.round(scale * 0.14));
+    ctx.fillStyle = "rgba(14, 8, 34, 0.45)";
+    for (let c = 1; c < LW / CELL; c++) ctx.fillRect(c * CELL * scale - (lw >> 1), 0, lw, H);
+    for (let r = 1; r < LH / CELL; r++) ctx.fillRect(0, r * CELL * scale - (lw >> 1), W, lw);
+    ctx.drawImage(fgOff, 0, 0, W, H);
+  }
+
+  function frame(now) {
+    schedule(now);
+    while (events.length && events[0].t <= now) handleStep(events.shift());
+    drawBg(now);
+    drawFg(now);
+    composite();
+    lastNow = now;
+  }
+
+  function loop() {
+    if (!manual) frame(clock());
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // Deterministic hook used to export the preview GIF.
+  window.clawdStage = {
+    renderAt(t) {
+      if (!manual) {
+        manual = true;
+        events.length = particles.length = 0;
+        stepIndex = 0;
+        nextTime = lastNow = t;
+      }
+      manualT = t;
+      frame(t);
+    },
+    setScale(s) { scale = s; canvas.width = LW * s; canvas.height = LH * s; },
+  };
+
+  // ---------- UI ----------
+  const roll = document.getElementById("roll");
+  const ROWS = [40, 38, 35, 33, 31, 28];
+  const cols = Array.from({ length: 32 }, () => []);
+  const holds = new Set();
+  PATTERN.forEach((n, i) => { if (n) for (let h = 1; h < n.len; h++) holds.add((i + h) % 32 + ":" + n.m); });
+  for (const m of ROWS) {
+    const k = document.createElement("div");
+    k.className = "k";
+    k.textContent = NAMES[m];
+    roll.appendChild(k);
+    for (let i = 0; i < 32; i++) {
+      const c = document.createElement("div");
+      let cls = "c";
+      if (Math.floor(i / 4) % 2 === 1) cls += " q";
+      if (i % 16 === 0) cls += " bar";
+      if (PATTERN[i] && PATTERN[i].m === m) cls += " on";
+      else if (holds.has(i + ":" + m)) cls += " hold";
+      c.className = cls;
+      roll.appendChild(c);
+      cols[i].push(c);
+    }
+  }
+  let lastCol = -1;
+  function markRoll(i) {
+    if (lastCol >= 0) for (const c of cols[lastCol]) c.classList.remove("now");
+    for (const c of cols[i]) c.classList.add("now");
+    lastCol = i;
+  }
+
+  const noteName = document.getElementById("noteName");
+  const noteDetail = document.getElementById("noteDetail");
+  function showNote(m) {
+    noteName.textContent = NAMES[m];
+    noteDetail.textContent = mtof(m).toFixed(1) + " Hz · " + FING[m].txt;
+  }
+
+  const bpmIn = document.getElementById("bpm");
+  const bpmOut = document.getElementById("bpmOut");
+  bpmIn.addEventListener("input", () => {
+    bpm = Number(bpmIn.value);
+    bpmOut.textContent = bpm + " BPM";
+  });
+
+  const soundBtn = document.getElementById("sound");
+  soundBtn.addEventListener("click", async () => {
+    const on = !soundOn;
+    if (on) {
+      try {
+        if (!actx) initAudio();
+        await actx.resume();
+      } catch (e) {
+        soundBtn.textContent = "这个浏览器放不了声音";
+        return;
+      }
+    } else if (actx) {
+      actx.suspend();
+    }
+    soundOn = on;
+    // the clock source just changed, so re-base everything on it
+    events.length = 0;
+    nextTime = clock() + 0.05;
+    lastNow = clock();
+    dipUntil = tapUntil = vibUntil = -1;
+    pulseT = pluckT = encoreT = -9;
+    soundBtn.setAttribute("aria-pressed", String(on));
+    soundBtn.textContent = on ? "静音" : "打开声音";
+  });
+
+  canvas.addEventListener("click", encore);
+  canvas.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); encore(); }
+  });
+})();
+</script>
+</body>
+</html>
