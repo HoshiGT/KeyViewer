@@ -62,29 +62,40 @@ public struct GColor : IModel, ICopyable<GColor> {
         return col;
     }
     public JToken Serialize() {
+        // Linux 上 VertexGradient 跨程序集读取偶发未初始化内存垃圾 (e+20/e-41 位模式):
+        // 写盘前净化, 非法分量回退为不透明白, 保证文件自愈
         return isSame
             ? new JObject {
-                [nameof(topLeft)] = ModelUtils.ToNode(topLeft),
+                [nameof(topLeft)] = ModelUtils.ToNode(Sanitize(topLeft)),
             }
             : new JObject {
-                [nameof(topLeft)] = ModelUtils.ToNode(topLeft),
-                [nameof(topRight)] = ModelUtils.ToNode(topRight),
-                [nameof(bottomLeft)] = ModelUtils.ToNode(bottomLeft),
-                [nameof(bottomRight)] = ModelUtils.ToNode(bottomRight),
+                [nameof(topLeft)] = ModelUtils.ToNode(Sanitize(topLeft)),
+                [nameof(topRight)] = ModelUtils.ToNode(Sanitize(topRight)),
+                [nameof(bottomLeft)] = ModelUtils.ToNode(Sanitize(bottomLeft)),
+                [nameof(bottomRight)] = ModelUtils.ToNode(Sanitize(bottomRight)),
             };
     }
+
+    static Color Sanitize(Color c) {
+        if(IsInvalid(c.r) || IsInvalid(c.g) || IsInvalid(c.b) || IsInvalid(c.a)) {
+            return new Color(1f, 1f, 1f, 1f);
+        }
+        return c;
+    }
+    static bool IsInvalid(float v) => float.IsNaN(v) || float.IsInfinity(v) || v < 0f || v > 1f;
     public void Deserialize(JToken node) {
+        // default Color 是 (0,0,0,0) 全透明 — 按键会整体隐形; 缺失/非法时回退不透明白
         topLeft = node[nameof(topLeft)] != null
-            ? ModelUtils.ToColor(node[nameof(topLeft)])
-            : default;
+            ? Sanitize(ModelUtils.ToColor(node[nameof(topLeft)]))
+            : new Color(1f, 1f, 1f, 1f);
         topRight = node[nameof(topRight)] != null
-            ? ModelUtils.ToColor(node[nameof(topRight)])
+            ? Sanitize(ModelUtils.ToColor(node[nameof(topRight)]))
             : topLeft;
         bottomLeft = node[nameof(bottomLeft)] != null
-            ? ModelUtils.ToColor(node[nameof(bottomLeft)])
+            ? Sanitize(ModelUtils.ToColor(node[nameof(bottomLeft)]))
             : topLeft;
         bottomRight = node[nameof(bottomRight)] != null
-            ? ModelUtils.ToColor(node[nameof(bottomRight)])
+            ? Sanitize(ModelUtils.ToColor(node[nameof(bottomRight)]))
             : topLeft;
 
         gradientEnabled = !isSame;

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -21,8 +21,13 @@ public static class AssetManager {
             var assets = request.assetBundle;
             Background = assets.LoadAsset<Sprite>("Assets/Images/KeyBackground.png");
             Outline = assets.LoadAsset<Sprite>("Assets/Images/KeyOutline.png");
-            RoundedCorners = assets.LoadAsset<Shader>("Assets/Shaders/RoundedCorners.shader");
-            Blur = assets.LoadAsset<Shader>("Assets/Shaders/Blur.shader");
+            if (Application.platform == RuntimePlatform.LinuxPlayer) {
+                RoundedCorners = Shader.Find("UI/Default");
+                Blur = Shader.Find("UI/Default");
+            } else {
+                RoundedCorners = assets.LoadAsset<Shader>("Assets/Shaders/RoundedCorners.shader");
+                Blur = assets.LoadAsset<Shader>("Assets/Shaders/Blur.shader");
+            }
             others = [];
             Main.Logger.Log($"Loaded Key Viewer's Assets");
             Initialized = true;
@@ -35,8 +40,10 @@ public static class AssetManager {
 
         Object.Destroy(Background);
         Object.Destroy(Outline);
-        Object.Destroy(RoundedCorners);
-        Object.Destroy(Blur);
+        if (Application.platform != RuntimePlatform.LinuxPlayer) {
+            Object.Destroy(RoundedCorners);
+            Object.Destroy(Blur);
+        }
         foreach(var spr in others.Values) {
             Object.Destroy(spr);
         }

@@ -90,8 +90,21 @@ public static class Main {
                 Directory.CreateDirectory(ProfilePath);
             }
 
-            var profileFiles = Directory.GetFiles(ProfilePath, "*.json");
+            // ProfilePath = Mod.Path 时目录里混有系统文件: Settings/info/语言文件。
+            // 它们不是配置 — 扫描时排除, 否则会被列进配置列表、自动激活、
+            // 甚至被"保存配置"操作覆盖 (历史上 info.json 被写成空配置导致 KV 掉线)。
+            var systemFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                "Settings", "info", "Chinese", "English", "Korean", "Language", "Default"
+            };
+            var profileFiles = Directory.GetFiles(ProfilePath, "*.json")
+                .Where(f => !systemFiles.Contains(Path.GetFileNameWithoutExtension(f)))
+                .ToArray();
             List<string> notExistProfiles = [];
+
+            // 历史污染残留: ActiveProfiles 里引用系统文件或已删文件的条目一并清掉
+            Settings.ActiveProfiles.RemoveAll(p =>
+                systemFiles.Contains(p.Name)
+                || !File.Exists(Path.Combine(ProfilePath, p.Name + ".json")));
 
             foreach(var file in profileFiles) {
                 try {
