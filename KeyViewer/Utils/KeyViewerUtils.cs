@@ -43,6 +43,9 @@ public static class KeyViewerUtils {
         return offset;
     }
     public static void ApplyColorLayout(Image image, GColor color, bool blurEnabled) {
+        if(color.gradientEnabled && color.isSame) {
+            color = new GColor(color.topLeft) { gradientEnabled = false };
+        }
         UICornersGradient grad = image.GetComponent<UICornersGradient>();
         if(blurEnabled) {
             if(grad) {
@@ -124,7 +127,7 @@ public static class KeyViewerUtils {
             Material mat = image.material;
             DOVirtual.Float(0, 1, easeConfig.Duration, f => mat.SetColor(Blur_TintColor, EasedColor(from, to, f))).SetEase(easeConfig.Ease).SetAutoKill(false).SetTarget(image);
         }
-        var gradEnabled = from.gradientEnabled || to.gradientEnabled;
+        var gradEnabled = (from.gradientEnabled && !from.isSame) || (to.gradientEnabled && !to.isSame);
         if(gradEnabled) {
             image.color = Color.white;
             if(!grad) {
