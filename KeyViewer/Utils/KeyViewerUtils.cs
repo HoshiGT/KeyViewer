@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using KeyViewer.Core;
 using KeyViewer.Core.Interfaces;
 using KeyViewer.Models;
@@ -69,9 +69,8 @@ public static class KeyViewerUtils {
         } else {
             if(grad) {
                 Object.Destroy(grad);
-            } else {
-                image.color = color;
             }
+            image.color = color;
         }
     }
     public static void ApplyColorLayout(TextMeshProUGUI text, GColor color) => text.colorGradient = color.gradientEnabled ? (VertexGradient)color : new VertexGradient(color);
@@ -126,6 +125,7 @@ public static class KeyViewerUtils {
 
             Material mat = image.material;
             DOVirtual.Float(0, 1, easeConfig.Duration, f => mat.SetColor(Blur_TintColor, EasedColor(from, to, f))).SetEase(easeConfig.Ease).SetAutoKill(false).SetTarget(image);
+            return;
         }
         var gradEnabled = (from.gradientEnabled && !from.isSame) || (to.gradientEnabled && !to.isSame);
         if(gradEnabled) {
@@ -146,9 +146,8 @@ public static class KeyViewerUtils {
         } else {
             if(grad) {
                 Object.Destroy(grad);
-            } else {
-                image.DOColor(to, easeConfig.Duration).SetEase(easeConfig.Ease).SetAutoKill(false);
             }
+            image.DOColor(to, easeConfig.Duration).SetEase(easeConfig.Ease).SetAutoKill(false);
         }
     }
     public static void ApplyColor(TextMeshProUGUI text, GColor from, GColor to, EaseConfig easeConfig) {

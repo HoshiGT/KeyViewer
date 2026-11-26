@@ -1,4 +1,4 @@
-﻿using KeyViewer.Core;
+using KeyViewer.Core;
 using KeyViewer.Core.Input;
 using KeyViewer.Core.Translation;
 using KeyViewer.Models;
@@ -244,7 +244,9 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
             var profile = new ActiveProfile(GetNewProfileName(), true);
             model.ActiveProfiles.Add(profile);
             Profile newProfile = new();
-            File.WriteAllText(Path.Combine(Main.ProfilePath, $"{profile.Name}.json"), newProfile.Serialize().ToString());
+            string newPath = Path.Combine(Main.ProfilePath, $"{profile.Name}.json");
+            Main.ToDeleteFiles.Remove(newPath);
+            File.WriteAllText(newPath, newProfile.Serialize().ToString());
             Main.AddManager(profile, true);
         }
         if(Drawer.Button(Main.Lang.Get("OPEN_MOD_DIR", "Open Mod Directory"))) {
@@ -278,7 +280,7 @@ public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(setting
 
             if(isConfirm) {
                 if(Drawer.Button(Main.Lang.Get("ONE_MORE", "One More!"))) {
-                    Main.RemoveManager(profile);
+                    Main.RemoveManager(profile, false);
                     string path = Path.Combine(Main.ProfilePath, $"{profile.Name}.json");
 
                     if(File.Exists(path)) {

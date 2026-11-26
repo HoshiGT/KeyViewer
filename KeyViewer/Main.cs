@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using KeyViewer.Controllers;
 using KeyViewer.Core;
 using KeyViewer.Core.Input;
@@ -209,12 +209,18 @@ public static class Main {
     }
     public static void OnSaveGUI(ModEntry modEntry) {
         File.WriteAllText(Constants.SettingsPath, Settings.Serialize().ToString());
+        var activePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach(var (name, manager) in Managers) {
-            File.WriteAllText(Path.Combine(ProfilePath, $"{name}.json"), manager.profile.Serialize().ToString());
+            var path = Path.Combine(ProfilePath, $"{name}.json");
+            File.WriteAllText(path, manager.profile.Serialize().ToString());
+            activePaths.Add(path);
         }
         foreach(var path in ToDeleteFiles) {
-            File.Delete(path);
+            if(!activePaths.Contains(path) && File.Exists(path)) {
+                File.Delete(path);
+            }
         }
+        ToDeleteFiles.Clear();
     }
     public static void OnShowGUI(ModEntry modEntry) {
         GUI.Flush();
@@ -255,8 +261,16 @@ public static class Main {
         }
         return false;
     }
-    public static void RemoveManager(ActiveProfile profile) {
+    public static void RemoveManager(ActiveProfile profile, bool save = true) {
         if(Managers.TryGetValue(profile.Name, out var manager)) {
+            if(save && manager.profile != null) {
+                try {
+                    var savePath = Path.Combine(ProfilePath, $"{profile.Name}.json");
+                    File.WriteAllText(savePath, manager.profile.Serialize().ToString());
+                } catch(Exception ex) {
+                    Logger.Log($"Failed to save profile {profile.Name} before removing: {ex.Message}");
+                }
+            }
             Object.Destroy(manager.gameObject);
             Managers.Remove(profile.Name);
             Logger.Log($"Released Key Manager {profile.Name}.");

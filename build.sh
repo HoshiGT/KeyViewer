@@ -3,11 +3,14 @@ set -e
 
 cd /home/hoshi/adofaimods/KeyViewer-src
 
-GAME_MANAGED="/home/hoshi/adofaimods/A Dance of Fire and Ice/A Dance of Fire and Ice_Data/Managed"
+GAME_MANAGED="${GAME_MANAGED:-/home/hoshi/.steam/debian-installation/steamapps/common/A Dance of Fire and Ice/ADanceOfFireAndIce_Data/Managed}"
+if [ ! -d "$GAME_MANAGED" ]; then
+  GAME_MANAGED="/home/hoshi/adofaimods/A Dance of Fire and Ice/A Dance of Fire and Ice_Data/Managed"
+fi
 NET461_LIB="/home/hoshi/.dotnet/sdk/9.0.314/Microsoft/Microsoft.NET.Build.Extensions/net461/lib"
 MONO_LIB="/usr/lib/mono/4.5"
 DOTNET="/home/hoshi/.dotnet"
-CSC="$DOTNET/sdk/9.0.314/Roslyn/bincore/csc.dll"
+CSC="$(ls -d "$DOTNET"/sdk/*/Roslyn/bincore/csc.dll 2>/dev/null | sort -V | tail -1)"
 export PATH="$DOTNET:$PATH"
 
 # Output
@@ -93,7 +96,7 @@ REFS=(
   "$GAME_MANAGED/UnityFileDialog.dll"
   "$GAME_MANAGED/UnityModManager/UnityModManager.dll"
   "$GAME_MANAGED/UnityModManager/0Harmony.dll"
-  "/home/hoshi/adofaimods/Keyviewer/lib/NCalc.dll"
+  "/home/hoshi/.steam/debian-installation/steamapps/common/A Dance of Fire and Ice/Mods/KeyViewer/lib/NCalc.dll"
   "$GAME_MANAGED/UnityEngine.AccessibilityModule.dll"
   "$GAME_MANAGED/UnityEngine.AIModule.dll"
   "$GAME_MANAGED/UnityEngine.AndroidJNIModule.dll"
@@ -129,6 +132,11 @@ RSP_FILE="build.rsp"
   for ref in "${REFS[@]}"; do
     if [ -f "$ref" ]; then
       echo "-r:\"$ref\""
+    fi
+  done
+  for img in KeyViewer/MiscFiles/images/*.png; do
+    if [ -f "$img" ]; then
+      echo "-resource:\"$img\",KeyViewer.MiscFiles.images.$(basename "$img")"
     fi
   done
   for src in $SRC; do

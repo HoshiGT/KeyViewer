@@ -36,7 +36,7 @@ public class KeyManager : MonoBehaviour {
         kpsCalc.Start();
         Canvas canvas = gameObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 200;
+        canvas.sortingOrder = 0;
         CanvasScaler scaler = gameObject.AddComponent<CanvasScaler>();
         scaler.referenceResolution = new Vector2(1280, 720);
         keys = [];
